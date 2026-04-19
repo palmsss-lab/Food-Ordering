@@ -64,7 +64,6 @@ class CartService
             // Update quantity
             $cartItem->update([
                 'quantity' => $newQuantity,
-                'special_instructions' => $instructions ?? $cartItem->special_instructions
             ]);
             
             return $cartItem;
@@ -79,7 +78,6 @@ class CartService
                 'menu_item_id' => $menuItem->id,
                 'quantity' => $quantity,
                 'price' => $menuItem->price,
-                'special_instructions' => $instructions
             ]);
         }
     }
@@ -169,7 +167,6 @@ class CartService
                 'quantity' => $item->quantity,
                 'price' => $item->price,
                 'subtotal' => $item->price * $item->quantity,
-                'special_instructions' => $item->special_instructions,
             ];
         })->toArray();
     }

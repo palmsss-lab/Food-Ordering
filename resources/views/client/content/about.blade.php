@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- About Section -->
-<div class="max-w-screen-xl mx-auto mt-10 px-4 md:px-0 py-20">
+<div class="max-w-screen-xl mx-auto mt-24 px-4 md:px-6 lg:px-8 py-10 md:py-16">
     <!-- Section Header -->
     <div class="text-center mb-16">
         <div class="inline-flex items-center gap-2 bg-[#ea5a47]/10 text-[#ea5a47] px-4 py-2 rounded-full text-sm font-semibold mb-4">

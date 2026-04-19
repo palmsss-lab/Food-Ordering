@@ -23,59 +23,8 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $tab = $request->get('tab', 'pending');
-        
-        // Include soft-deleted users in the query
-        $query = Order::with(['items', 'latestPayment', 'user' => function($q) {
-            $q->withTrashed(); // Include soft-deleted users
-        }]);
-        
-        switch($tab) {
-            case 'pending':
-                // Show all orders that need confirmation (regardless of payment method)
-                $query->where('order_status', 'pending')
-                      ->whereNull('admin_confirmed_at');
-                break;
-            case 'confirmed':
-                // Show orders that have been confirmed by admin
-                $query->whereNotNull('admin_confirmed_at')
-                      ->whereIn('order_status', ['pending', 'confirmed', 'preparing']);
-                break;
-            case 'preparing':
-                $query->where('order_status', 'preparing');
-                break;
-            case 'ready':
-                $query->where('order_status', 'ready');
-                break;
-            case 'completed':
-                $query->where('order_status', 'completed');
-                break;
-            case 'cancelled':
-                $query->where('order_status', 'cancelled');
-                break;
-        }
-        
-        $orders = $query->orderBy('created_at', 'desc')->paginate(15);
-        
-        // Transform orders to show deleted user info
-        $orders->getCollection()->transform(function($order) {
-            if ($order->user && $order->user->trashed()) {
-                $order->customer_name = $order->user->name; // Shows "Deleted User"
-            }
-            return $order;
-        });
-        
-        // Get counts for each status (including soft-deleted users)
-        $counts = [
-            'pending' => Order::where('order_status', 'pending')->whereNull('admin_confirmed_at')->count(),
-            'confirmed' => Order::whereNotNull('admin_confirmed_at')->whereIn('order_status', ['pending', 'confirmed', 'preparing'])->count(),
-            'preparing' => Order::where('order_status', 'preparing')->count(),
-            'ready' => Order::where('order_status', 'ready')->count(),
-            'completed' => Order::where('order_status', 'completed')->count(),
-            'cancelled' => Order::where('order_status', 'cancelled')->count(),
-        ];
-        
-        return view('admin.orders.index', compact('orders', 'tab', 'counts'));
+        // Data is fetched by the Livewire\Admin\OrdersList component
+        return view('admin.orders.index');
     }
 
     /**
@@ -100,10 +49,16 @@ class OrderController extends Controller
     {
         // Check if order can be confirmed
         if ($order->order_status !== 'pending') {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Only pending orders can be confirmed.'], 422);
+            }
             return back()->with('error', 'Only pending orders can be confirmed.');
         }
 
         if ($order->admin_confirmed_at) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Order has already been confirmed.'], 422);
+            }
             return back()->with('error', 'Order has already been confirmed.');
         }
 
@@ -124,6 +79,9 @@ class OrderController extends Controller
             // For gcash/card, payment_status should already be 'paid'
         });
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => "Order #{$order->order_number} confirmed and moved to preparing."]);
+        }
         return redirect()->route('admin.orders.index', ['tab' => 'preparing'])
             ->with('success', "Order #{$order->order_number} confirmed and moved to preparing.");
     }
@@ -171,93 +129,77 @@ class OrderController extends Controller
     /**
      * Mark cash order as paid upon pickup
      */
-    public function markAsPaid(Order $order)
+    public function markAsPaid(Order $order, Request $request)
     {
+        $isJson = $request->wantsJson();
+
         if ($order->payment_method !== 'cash') {
-            return back()->with('error', 'Only cash orders can be marked as paid via this method.');
+            return $isJson
+                ? response()->json(['success' => false, 'message' => 'Only cash orders can be marked as paid.'], 422)
+                : back()->with('error', 'Only cash orders can be marked as paid via this method.');
         }
 
         if ($order->payment_status === 'paid') {
-            return back()->with('error', 'Order is already marked as paid.');
+            return $isJson
+                ? response()->json(['success' => false, 'message' => 'Order is already marked as paid.'], 422)
+                : back()->with('error', 'Order is already marked as paid.');
         }
 
         DB::beginTransaction();
-        
+
         try {
-            // Update payment status
-            $order->update([
-                'payment_status' => 'paid',
-            ]);
-            
-            // Update the payment record
+            $order->update(['payment_status' => 'paid']);
+
             $latestPayment = $order->latestPayment;
             if ($latestPayment && $latestPayment->payment_method === 'cash') {
-                $latestPayment->update([
-                    'payment_status' => 'completed',
-                    'paid_at' => now()
-                ]);
+                $latestPayment->update(['payment_status' => 'completed', 'paid_at' => now()]);
             }
-            
-            // CREATE TRANSACTION FOR CASH ORDER (only when paid)
-            $existingTransaction = Transaction::where('order_number', $order->order_number)->first();
-            
+
+            $existingTransaction = Transaction::where('order_id', $order->id)->first();
+
             if (!$existingTransaction) {
-                // Log the data we're trying to save
-                Log::info('Creating transaction for order:', [
-                    'order_number' => $order->order_number,
-                    'user_id' => $order->user_id,
-                    'total' => $order->total
-                ]);
-                
-                $transactionNumber = Transaction::generateTransactionNumber();
-                Log::info('Generated transaction number: ' . $transactionNumber);
-                
                 $transaction = Transaction::create([
-                    'transaction_number' => $transactionNumber,
-                    'order_number' => $order->order_number,
-                    'user_id' => $order->user_id,
-                    'customer_name' => $order->customer_name,
-                    'customer_email' => $order->customer_email,
-                    'customer_phone' => $order->customer_phone,
-                    'payment_method' => 'cash',
-                    'payment_status' => 'paid',
-                    'subtotal' => $order->subtotal,
-                    'tax' => $order->tax,
-                    'total' => $order->total,
-                    'notes' => $order->notes,
-                    'transaction_date' => now(),
-                    'reference_number' => $latestPayment?->reference_number,
+                    'transaction_number' => Transaction::generateTransactionNumber(),
+                    'order_number'       => $order->order_number,
+                    'order_id'           => $order->id,
+                    'user_id'            => $order->user_id,
+                    'customer_name'      => $order->customer_name,
+                    'customer_email'     => $order->customer_email,
+                    'customer_phone'     => $order->customer_phone,
+                    'payment_method'     => 'cash',
+                    'payment_status'     => 'paid',
+                    'subtotal'           => $order->subtotal,
+                    'tax'                => $order->tax,
+                    'total'              => $order->total,
+                    'notes'              => $order->notes,
+                    'transaction_date'   => now(),
+                    'reference_number'   => $latestPayment?->reference_number,
                 ]);
 
-                Log::info('Transaction created with ID: ' . $transaction->id);
-
-                // Copy order items to transaction items
                 foreach ($order->items as $item) {
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
-                        'order_item_id' => $item->id,
-                        'item_name' => $item->item_name,
-                        'quantity' => $item->quantity,
-                        'price' => $item->price,
-                        'subtotal' => $item->subtotal,
-                        'special_instructions' => $item->special_instructions,
+                        'order_item_id'  => $item->id,
+                        'item_name'      => $item->item_name,
+                        'quantity'       => $item->quantity,
+                        'price'          => $item->price,
+                        'subtotal'       => $item->subtotal,
                     ]);
                 }
-                
-                Log::info('Transaction items created successfully');
             }
-            
+
             DB::commit();
 
-            return redirect()->back()
-                ->with('success', "Order #{$order->order_number} marked as paid and added to transactions.");
+            return $isJson
+                ? response()->json(['success' => true, 'message' => "Order #{$order->order_number} marked as paid."])
+                : redirect()->back()->with('success', "Order #{$order->order_number} marked as paid and added to transactions.");
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log the actual error
             Log::error('Failed to mark order as paid: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return back()->with('error', 'Failed to mark order as paid: ' . $e->getMessage());
+            return $isJson
+                ? response()->json(['success' => false, 'message' => 'Failed to mark order as paid.'], 500)
+                : back()->with('error', 'Failed to mark order as paid: ' . $e->getMessage());
         }
     }
 
@@ -280,6 +222,9 @@ class OrderController extends Controller
 
         // Check if the transition is allowed
         if (!isset($allowedTransitions[$currentStatus]) || !in_array($newStatus, $allowedTransitions[$currentStatus])) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => "Cannot change order from {$currentStatus} to {$newStatus}."], 422);
+            }
             return redirect()->back()
                 ->with('error', "Cannot change order from {$currentStatus} to {$newStatus}.");
         }
@@ -296,12 +241,13 @@ class OrderController extends Controller
 
             // If order is completed and NOT cash (GCash/Card), create transaction
             if ($newStatus === 'completed' && $order->payment_method !== 'cash') {
-                $existingTransaction = Transaction::where('order_number', $order->order_number)->first();
+                $existingTransaction = Transaction::where('order_id', $order->id)->first();
                 
                 if (!$existingTransaction) {
                     $transaction = Transaction::create([
                         'transaction_number' => Transaction::generateTransactionNumber(),
                         'order_number' => $order->order_number,
+                        'order_id' => $order->id,
                         'user_id' => $order->user_id,
                         'customer_name' => $order->customer_name,
                         'customer_email' => $order->customer_email,
@@ -320,12 +266,11 @@ class OrderController extends Controller
                     foreach ($order->items as $item) {
                         TransactionItem::create([
                             'transaction_id' => $transaction->id,
-                            'order_item_id' => $item->id,
-                            'item_name' => $item->item_name,
-                            'quantity' => $item->quantity,
-                            'price' => $item->price,
-                            'subtotal' => $item->subtotal,
-                            'special_instructions' => $item->special_instructions,
+                            'order_item_id'  => $item->id,
+                            'item_name'      => $item->item_name,
+                            'quantity'       => $item->quantity,
+                            'price'          => $item->price,
+                            'subtotal'       => $item->subtotal,
                         ]);
                     }
                 }
@@ -339,6 +284,9 @@ class OrderController extends Controller
                 'completed' => 'Completed',
             ];
 
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => "Order #{$order->order_number} marked as {$statusNames[$newStatus]}."]);
+            }
             return redirect()->back()
                 ->with('success', "Order #{$order->order_number} marked as {$statusNames[$newStatus]}.");
 
@@ -347,6 +295,32 @@ class OrderController extends Controller
             Log::error('Failed to update order status: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to update order status.');
         }
+    }
+
+    /**
+     * Mark order as ready for pickup
+     */
+    public function markAsReady(Request $request, Order $order)
+    {
+        if ($order->order_status !== 'preparing') {
+            return back()->with('error', 'Only orders in preparation can be marked as ready.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $order->update([
+                'order_status' => 'ready',
+                'ready_at' => now(),
+            ]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to mark order as ready: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update order status.');
+        }
+
+        return redirect()->route('admin.orders.index', ['tab' => 'ready'])
+            ->with('success', "Order #{$order->order_number} is ready for pickup.");
     }
 
     /**

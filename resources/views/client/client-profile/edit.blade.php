@@ -2,13 +2,14 @@
 
 @section('title', 'Edit Profile')
 
+@section('content')
 <div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden">
     <!-- Decorative Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <!-- Large blurred circles -->
-        <div class="absolute -top-20 -right-20 w-96 h-96 bg-[#ea5a47] opacity-5 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-[#c53030] opacity-5 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#ea5a47]/5 to-[#c53030]/5 rounded-full blur-3xl"></div>
+        <div class="absolute -top-20 -right-20 w-48 h-48 sm:w-96 sm:h-96 bg-[#ea5a47] opacity-5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-20 -left-20 w-48 h-48 sm:w-96 sm:h-96 bg-[#c53030] opacity-5 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] sm:w-[800px] sm:h-[800px] bg-gradient-to-r from-[#ea5a47]/5 to-[#c53030]/5 rounded-full blur-3xl"></div>
         
         <!-- Food-themed decorative icons -->
         <div class="absolute top-20 left-20 text-7xl opacity-10 transform rotate-12">🍽️</div>
@@ -29,7 +30,7 @@
     </div>
 
 
-    <div class="relative z-10 max-w-2xl mx-auto mt-32 px-4 mb-20">
+    <div class="relative z-10 max-w-2xl mx-auto mt-24 md:mt-32 px-4 mb-20">
         <!-- Main Card with enhanced styling -->
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden">
             <!-- Card decorative elements -->
@@ -47,7 +48,7 @@
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-4xl font-black text-gray-800">
+                    <h1 class="text-2xl sm:text-4xl font-black text-gray-800">
                         Edit <span class="text-[#ea5a47]">Profile</span>
                     </h1>
                     <p class="text-gray-500 mt-1">Update your personal information</p>
@@ -201,3 +202,5 @@
         animation: slideDown 0.3s ease-out;
     }
 </style>
+
+@endsection

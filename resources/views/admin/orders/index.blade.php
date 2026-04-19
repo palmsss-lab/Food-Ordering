@@ -24,7 +24,7 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800">
+                <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                     Orders <span class="text-[#ea5a47]">Management</span>
                 </h1>
             </div>
@@ -32,280 +32,69 @@
 
         <!-- Success/Error Messages -->
         @if(session('success'))
-            <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg mb-6 animate-slideDown">
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-lg mb-6 animate-slideDown flex items-center justify-between" role="alert">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     <span>{{ session('success') }}</span>
                 </div>
+                <button type="button" onclick="this.closest('[role=alert]').remove()" aria-label="Dismiss" class="text-green-400 hover:text-green-600 ml-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6 animate-slideDown">
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6 animate-slideDown flex items-center justify-between" role="alert">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     <span>{{ session('error') }}</span>
                 </div>
+                <button type="button" onclick="this.closest('[role=alert]').remove()" aria-label="Dismiss" class="text-red-400 hover:text-red-600 ml-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
         @endif
 
-        <!-- Status Tabs -->
-        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-4 border border-white/20 relative overflow-hidden mb-6">
-            <div class="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#ea5a47] to-[#c53030] opacity-5 rounded-br-3xl"></div>
-            
-            <div class="relative z-10 flex flex-wrap gap-2">
-                @php
-                    $tabs = [
-                        'pending' => [
-                            'label' => 'Awaiting Confirmation', 
-                            'color' => 'yellow', 
-                            'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-                        ],
-                        'preparing' => [
-                            'label' => 'Preparing', 
-                            'color' => 'purple', 
-                            'icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6'
-                        ],
-                        'ready' => [
-                            'label' => 'Ready for Pickup', 
-                            'color' => 'green', 
-                            'icon' => 'M5 13l4 4L19 7'
-                        ],
-                        'completed' => [
-                            'label' => 'Completed', 
-                            'color' => 'gray', 
-                            'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                        ],
-                        'cancelled' => [
-                            'label' => 'Cancelled', 
-                            'color' => 'red', 
-                            'icon' => 'M6 18L18 6M6 6l12 12'
-                        ],
-                    ];
-                    $currentTab = request('tab', 'pending');
-                    
-                    $activeClasses = [
-                        'pending' => 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300',
-                        'preparing' => 'bg-purple-100 text-purple-700 border-2 border-purple-300',
-                        'ready' => 'bg-green-100 text-green-700 border-2 border-green-300',
-                        'completed' => 'bg-gray-100 text-gray-700 border-2 border-gray-300',
-                        'cancelled' => 'bg-red-100 text-red-700 border-2 border-red-300',
-                    ];
-                @endphp
-                
-                @foreach($tabs as $key => $tab)
-                    <a href="{{ route('admin.orders.index', ['tab' => $key]) }}" 
-                       class="tab-link flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 whitespace-nowrap
-                              {{ $currentTab == $key ? $activeClasses[$key] : 'hover:bg-gray-100 hover:scale-105' }}">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $tab['icon'] }}" />
-                        </svg>
-                        <span class="font-medium">{{ $tab['label'] }}</span>
-                        <span class="ml-2 px-2 py-0.5 text-xs bg-white rounded-full shadow-sm">
-                            {{ $counts[$key] ?? 0 }}
-                        </span>
-                    </a>
-                @endforeach
-            </div>
-        </div>
+        <livewire:admin.orders-list />
 
-        <!-- Orders Table -->
-        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#ea5a47] to-[#c53030] opacity-5 rounded-bl-3xl"></div>
-            
-            <div class="relative z-10 overflow-x-auto" style="max-height: calc(100vh - 320px); overflow-y: auto;">
-                <table class="w-full text-sm text-left text-gray-700">
-                    <thead class="text-xs uppercase bg-gray-50/80 border-b-2 border-gray-200 sticky top-0 z-10">
-                        <tr>
-                            <th class="px-6 py-4 bg-gray-50/95">Order #</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Customer</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Items</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Total</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Payment Method</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Payment Status</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Order Status</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Admin Confirmation</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Ordered</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($orders as $order)
-                        @php
-                            $paymentMethod = $order->payment_method ?? 'N/A';
-                            $isCashPayment = ($paymentMethod === 'cash');
-                            $needsConfirmation = ($order->order_status === 'pending' && !$order->admin_confirmed_at);
-                            $canMarkAsPaid = ($isCashPayment && $order->payment_status === 'cash on pickup' && $order->order_status === 'completed');
-                        @endphp
-
-                        <tr class="hover:bg-gray-50/50 transition-colors duration-200" data-order-id="{{ $order->id }}">
-                            <td class="px-6 py-4 font-mono text-sm">
-                                <a href="{{ route('admin.orders.show', $order) }}" class="view-order-link text-[#ea5a47] hover:underline font-medium">
-                                    {{ $order->order_number }}
-                                </a>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="font-medium">{{ $order->customer_name }}</div>
-                                @if($order->customer_phone)
-                                    <div class="text-xs text-gray-500">{{ $order->customer_phone }}</div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm">{{ $order->items->count() }} item(s)</div>
-                                <div class="text-xs text-gray-500 truncate max-w-[200px]">
-                                    {{ $order->items->pluck('item_name')->implode(', ') }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 font-bold text-gray-900">
-                                ₱{{ number_format($order->total, 2) }}
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($paymentMethod == 'cash')
-                                    <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium whitespace-nowrap">💵 Cash on Pickup</span>
-                                @elseif($paymentMethod == 'gcash')
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">📱 GCash</span>
-                                @elseif($paymentMethod == 'card')
-                                    <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium whitespace-nowrap">💳 Card</span>
-                                @else
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium whitespace-nowrap">{{ $paymentMethod }}</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($order->payment_status == 'paid')
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium whitespace-nowrap">✅ Paid</span>
-                                @elseif($order->payment_status == 'cash on pickup')
-                                    <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium whitespace-nowrap">💵 To Pay on Pickup</span>
-                                @elseif($order->payment_status == 'pending')
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium whitespace-nowrap">⏳ Pending Payment</span>
-                                @elseif($order->payment_status == 'failed')
-                                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium whitespace-nowrap">❌ Failed</span>
-                                @else
-                                    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium whitespace-nowrap">{{ ucfirst($order->payment_status) }}</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap
-                                    @if($order->order_status === 'pending') bg-yellow-100 text-yellow-700
-                                    @elseif($order->order_status === 'preparing') bg-purple-100 text-purple-700
-                                    @elseif($order->order_status === 'ready') bg-green-100 text-green-700
-                                    @elseif($order->order_status === 'completed') bg-gray-100 text-gray-700
-                                    @elseif($order->order_status === 'cancelled') bg-red-100 text-red-700
-                                    @endif">
-                                    @if($order->order_status === 'pending' && !$order->admin_confirmed_at)
-                                        Awaiting Confirmation
-                                    @else
-                                        {{ ucfirst($order->order_status) }}
-                                    @endif
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                @if($order->admin_confirmed_at)
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">✓ Confirmed</span>
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        {{ \Carbon\Carbon::parse($order->admin_confirmed_at)->format('M d, h:i A') }}
-                                    </div>
-                                @else
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">⏳ Pending</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
-                                {{ $order->created_at->diffForHumans() }}
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <a href="{{ route('admin.orders.show', $order) }}" class="view-order-link p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 hover:scale-110 transition-all duration-300" title="View Details">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    </a>
-
-                                    @if($needsConfirmation)
-                                        <button onclick="openConfirmOrderModal('{{ $order->id }}', '{{ $order->order_number }}', '{{ $order->customer_name }}', '{{ $order->total }}', '{{ $order->payment_method }}', '{{ $order->payment_status }}', '{{ route('admin.orders.confirm', $order) }}')"
-                                                class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 hover:scale-110 transition-all duration-300 relative group"
-                                                title="Confirm Order">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                                            </span>
-                                        </button>
-                                    @endif
-
-                                    @if($order->admin_confirmed_at && $order->order_status === 'pending')
-                                        <button onclick="openStatusModal('{{ $order->id }}', '{{ $order->order_number }}', 'preparing', '{{ route('admin.orders.update-status', $order) }}', 'Start Preparing', 'This order will be moved to preparation queue.')"
-                                                class="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 hover:scale-110 transition-all duration-300"
-                                                title="Start Preparing">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                            </svg>
-                                        </button>
-                                    @endif
-
-                                    @if($order->order_status === 'preparing')
-                                        <button onclick="openStatusModal('{{ $order->id }}', '{{ $order->order_number }}', 'ready', '{{ route('admin.orders.update-status', $order) }}', 'Mark as Ready', 'This order will be marked as ready for customer pickup.')"
-                                                class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 hover:scale-110 transition-all duration-300"
-                                                title="Mark as Ready">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </button>
-                                    @endif
-
-                                    @if($canMarkAsPaid)
-                                        <button onclick="openPaidModal('{{ $order->id }}', '{{ $order->order_number }}', '{{ $order->total }}', '{{ route('admin.orders.mark-as-paid', $order) }}')"
-                                                class="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 hover:scale-110 transition-all duration-300"
-                                                title="Mark as Paid">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </button>
-                                    @endif
-
-                                    @if($needsConfirmation)
-                                        <button onclick="openRejectOrderModal('{{ $order->id }}', '{{ $order->order_number }}', '{{ route('admin.orders.reject', $order) }}')"
-                                                class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 hover:scale-110 transition-all duration-300"
-                                                title="Reject Order">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="10" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                    </div>
-                                    <h5 class="text-xl font-bold text-gray-600 mb-2">No Orders Found</h5>
-                                    <p class="text-gray-500">There are no orders in this category.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            @if($orders->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200 bg-white/95">
-                {{ $orders->withQueryString()->links() }}
-            </div>
-            @endif
-        </div>
     </div>
+</div>
+
+<!-- ==================== BULK ACTION BAR ==================== -->
+<div id="bulk-action-bar"
+     class="hidden fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-2xl shadow-2xl px-4 sm:px-6 py-3 flex flex-wrap items-center gap-2 sm:gap-4 transition-all duration-300 max-w-[calc(100vw-2rem)]"
+     role="toolbar" aria-label="Bulk order actions">
+    <span class="text-sm font-medium" id="bulk-selected-label">0 selected</span>
+    <div class="h-4 w-px bg-gray-600"></div>
+    <button type="button" id="bulk-btn-confirm" onclick="bulkConfirmOrders()"
+            class="hidden px-4 py-1.5 bg-green-500 hover:bg-green-400 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Confirm Selected
+    </button>
+    <button type="button" id="bulk-btn-ready" onclick="bulkMarkReady()"
+            class="hidden px-4 py-1.5 bg-green-500 hover:bg-green-400 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Mark as Ready
+    </button>
+    <button type="button" id="bulk-btn-paid" onclick="bulkMarkAsPaid()"
+            class="hidden px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Mark as Paid
+    </button>
+    <button type="button" onclick="clearBulkSelection()"
+            class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-sm font-medium rounded-lg transition-colors">
+        Deselect All
+    </button>
 </div>
 
 <!-- ==================== UNIFIED MODAL COMPONENT ==================== -->
@@ -341,7 +130,7 @@
             </div>
             
             <!-- Close Button (Top Right) -->
-            <button onclick="closeUniversalModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:scale-110 transition-all duration-300">
+            <button type="button" onclick="closeUniversalModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:scale-110 transition-all duration-300">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -435,11 +224,11 @@
         if (isLoading) {
             button.disabled = true;
             button.setAttribute('data-original-text', originalText || button.innerHTML);
-            button.classList.add('opacity-70', 'cursor-not-allowed');
+            button.classList.add('opacity-50', 'cursor-not-allowed');
             button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>`;
         } else {
             button.disabled = false;
-            button.classList.remove('opacity-70', 'cursor-not-allowed');
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
             const original = button.getAttribute('data-original-text');
             if (original) {
                 button.innerHTML = original;
@@ -494,14 +283,14 @@
             message: `Are you sure you want to confirm this order? This will move it to the preparation queue and notify the customer.`,
             showRejectionReason: false,
             buttons: `
-                <button onclick="submitConfirmOrder('${confirmUrl}', this)" 
+                <button type="button" onclick="submitConfirmOrder('${confirmUrl}', this)"
                         class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Yes, Confirm Order
                 </button>
-                <button onclick="closeUniversalModal()" 
+                <button type="button" onclick="closeUniversalModal()"
                         class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
                     Cancel
                 </button>
@@ -526,46 +315,65 @@
     }
     
     // Status Update Modal (Preparing/Ready)
-    function openStatusModal(orderId, orderNumber, status, actionUrl, buttonText, message) {
-        const statusText = status === 'preparing' ? 'Start Preparing' : 'Mark as Ready';
-        const statusColor = status === 'preparing' ? 'purple' : 'green';
-        const iconPath = status === 'preparing' 
-            ? 'M12 6v6m0 0v6m0-6h6m-6 0H6' 
-            : 'M5 13l4 4L19 7';
-        
+    function openStatusModal(orderId, orderNumber, status, actionUrl, buttonText, message, customerName, total, paymentMethod) {
+        const isPreparing  = status === 'preparing';
+        const statusColor  = isPreparing ? 'purple' : 'green';
+        const iconPath     = isPreparing ? 'M12 6v6m0 0v6m0-6h6m-6 0H6' : 'M5 13l4 4L19 7';
+        const titleText    = isPreparing ? 'Start Preparing' : 'Mark as Ready';
+        const subtitleText = isPreparing ? 'Move order to kitchen queue' : 'Notify customer for pickup';
+
+        const pmDisplay = paymentMethod === 'cash' ? 'Cash on Pickup'
+                        : paymentMethod === 'gcash' ? 'GCash'
+                        : paymentMethod === 'card'  ? 'Card'
+                        : (paymentMethod || '—');
+
+        const totalDisplay = total ? '₱' + parseFloat(total).toFixed(2) : '—';
+
         openUniversalModal({
             iconTitle: `
-                <div class="w-14 h-14 rounded-full bg-${statusColor}-100 flex items-center justify-center shadow-lg">
+                <div class="w-14 h-14 rounded-full bg-${statusColor}-100 flex items-center justify-center shadow-lg flex-shrink-0">
                     <svg class="w-7 h-7 text-${statusColor}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}" />
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black text-gray-800">${statusText}</h2>
-                    <p class="text-sm text-gray-500">Update order status</p>
-                </div>
-            `,
+                    <h2 class="text-2xl font-black text-gray-800">${titleText}</h2>
+                    <p class="text-sm text-gray-500">${subtitleText}</p>
+                </div>`,
             orderInfo: `
-                <div class="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span class="text-gray-500">Order Number:</span>
-                    <span class="font-bold text-[#ea5a47]">${orderNumber}</span>
-                </div>
-            `,
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+                        <span class="text-gray-500">Order Number:</span>
+                        <span class="font-bold text-[#ea5a47]">${orderNumber}</span>
+                    </div>
+                    ${customerName ? `
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">Customer:</span>
+                        <span class="font-medium">${escapeHtml(customerName)}</span>
+                    </div>` : ''}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">Total Amount:</span>
+                        <span class="font-bold text-green-600">${totalDisplay}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">Payment Method:</span>
+                        <span class="px-2 py-1 bg-gray-100 rounded-full text-xs">${pmDisplay}</span>
+                    </div>
+                </div>`,
             message: message,
             showRejectionReason: false,
             buttons: `
-                <button onclick="submitStatusUpdate('${actionUrl}', '${status}', this)" 
+                <button type="button" onclick="submitStatusUpdate('${actionUrl}', '${status}', this)"
                         class="flex-1 px-4 py-3 bg-gradient-to-r from-${statusColor}-600 to-${statusColor}-700 text-white rounded-xl hover:from-${statusColor}-700 hover:to-${statusColor}-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Yes, ${buttonText}
                 </button>
-                <button onclick="closeUniversalModal()" 
+                <button type="button" onclick="closeUniversalModal()"
                         class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
                     Cancel
-                </button>
-            `
+                </button>`
         });
     }
     
@@ -618,14 +426,14 @@
             message: `Confirm that the customer has paid the full amount in cash. This will mark the order as paid.`,
             showRejectionReason: false,
             buttons: `
-                <button onclick="submitMarkAsPaid('${paidUrl}', this)" 
+                <button type="button" onclick="submitMarkAsPaid('${paidUrl}', this)"
                         class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     Yes, Mark as Paid
                 </button>
-                <button onclick="closeUniversalModal()" 
+                <button type="button" onclick="closeUniversalModal()"
                         class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
                     Cancel
                 </button>
@@ -672,14 +480,14 @@
             message: `Please provide a reason for rejecting this order. This will be visible to the customer.`,
             showRejectionReason: true,
             buttons: `
-                <button onclick="submitRejectOrder('${rejectUrl}', this)" 
+                <button type="button" onclick="submitRejectOrder('${rejectUrl}', this)"
                         class="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Yes, Reject Order
                 </button>
-                <button onclick="closeUniversalModal()" 
+                <button type="button" onclick="closeUniversalModal()"
                         class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
                     Cancel
                 </button>
@@ -818,4 +626,379 @@
         transform: scale(0.98);
     }
 </style>
+
+<script>
+// ==================== BULK ORDER ACTIONS ====================
+
+// Restore checkboxes after Livewire re-renders (wire:poll re-renders every 5s)
+let _bulkSelectedIds = new Set();
+let _lastKnownTab = null;
+
+document.addEventListener('livewire:morph', function () {
+    const currentTab = getActiveTab();
+
+    // Tab changed — clear stale selection from the previous tab
+    if (_lastKnownTab !== null && _lastKnownTab !== currentTab) {
+        _bulkSelectedIds.clear();
+        const selectAll = document.getElementById('bulk-select-all');
+        if (selectAll) selectAll.checked = false;
+    }
+    _lastKnownTab = currentTab;
+
+    restoreCheckboxState();
+});
+
+function getActiveTab() {
+    const root = document.querySelector('[data-active-tab]');
+    return root ? root.getAttribute('data-active-tab') : null;
+}
+
+function restoreCheckboxState() {
+    if (_bulkSelectedIds.size === 0) {
+        updateBulkBar();
+        return;
+    }
+    document.querySelectorAll('.bulk-order-checkbox').forEach(cb => {
+        const id = cb.getAttribute('data-order-id');
+        if (_bulkSelectedIds.has(id)) cb.checked = true;
+    });
+    updateBulkBar();
+}
+
+function toggleBulkSelectAll(selectAll) {
+    document.querySelectorAll('.bulk-order-checkbox').forEach(cb => {
+        cb.checked = selectAll.checked;
+        const id = cb.getAttribute('data-order-id');
+        if (selectAll.checked) {
+            _bulkSelectedIds.add(id);
+        } else {
+            _bulkSelectedIds.delete(id);
+        }
+    });
+    updateBulkBar();
+}
+
+function updateBulkBar() {
+    // Sync internal state with only the currently visible checkboxes
+    const visibleIds = new Set();
+    document.querySelectorAll('.bulk-order-checkbox').forEach(cb => {
+        const id = cb.getAttribute('data-order-id');
+        visibleIds.add(id);
+        if (cb.checked) {
+            _bulkSelectedIds.add(id);
+        } else {
+            _bulkSelectedIds.delete(id);
+        }
+    });
+
+    // Remove IDs that are no longer in the DOM (stale from previous tab)
+    for (const id of [..._bulkSelectedIds]) {
+        if (!visibleIds.has(id)) _bulkSelectedIds.delete(id);
+    }
+
+    const count = _bulkSelectedIds.size;
+    const bar   = document.getElementById('bulk-action-bar');
+    const label = document.getElementById('bulk-selected-label');
+
+    if (count > 0) {
+        bar.classList.remove('hidden');
+        label.textContent = `${count} order${count !== 1 ? 's' : ''} selected`;
+    } else {
+        bar.classList.add('hidden');
+    }
+
+    // Show bulk buttons based on active tab
+    const tab = getActiveTab();
+
+    const confirmBtn = document.getElementById('bulk-btn-confirm');
+    const readyBtn   = document.getElementById('bulk-btn-ready');
+    const paidBtn    = document.getElementById('bulk-btn-paid');
+
+    if (confirmBtn) confirmBtn.classList.toggle('hidden', tab !== 'pending');
+    if (readyBtn)   readyBtn.classList.toggle('hidden',   tab !== 'preparing');
+    if (paidBtn)    paidBtn.classList.toggle('hidden',    tab !== 'completed');
+}
+
+function clearBulkSelection() {
+    _bulkSelectedIds.clear();
+    document.querySelectorAll('.bulk-order-checkbox').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('bulk-select-all');
+    if (selectAll) selectAll.checked = false;
+    updateBulkBar();
+}
+
+function setBulkLoading(isLoading) {
+    const buttons = document.querySelectorAll('#bulk-btn-confirm, #bulk-btn-ready, #bulk-btn-paid');
+    buttons.forEach(btn => {
+        btn.disabled = isLoading;
+        btn.classList.toggle('opacity-50', isLoading);
+        btn.classList.toggle('cursor-not-allowed', isLoading);
+        if (isLoading) {
+            btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>';
+        } else if (btn.dataset.originalHtml) {
+            btn.innerHTML = btn.dataset.originalHtml;
+            delete btn.dataset.originalHtml;
+        }
+    });
+}
+
+// Switch the Livewire tab by clicking its button
+function switchToTab(tabKey) {
+    const btn = [...document.querySelectorAll('[wire\\:click]')]
+        .find(el => el.getAttribute('wire:click') === `setTab('${tabKey}')`);
+    if (btn) btn.click();
+}
+
+// Build a [{id, number}] list from the currently selected IDs using DOM data attributes
+function getSelectedOrderMeta() {
+    const meta = [];
+    document.querySelectorAll('.bulk-order-row').forEach(row => {
+        const id = row.getAttribute('data-order-id');
+        if (_bulkSelectedIds.has(id)) {
+            meta.push({ id, number: row.getAttribute('data-order-number') || id });
+        }
+    });
+    return meta;
+}
+
+function buildOrderListHtml(orders) {
+    const rows = orders.map(o =>
+        `<div class="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+            <svg class="w-3.5 h-3.5 text-[#ea5a47] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <span class="font-semibold text-[#ea5a47] text-sm">${escapeHtml(o.number)}</span>
+        </div>`
+    ).join('');
+
+    const scrollClass = orders.length > 5 ? 'max-h-40 overflow-y-auto' : '';
+    return `<div class="${scrollClass} pr-1">${rows}</div>`;
+}
+
+function bulkConfirmOrders() {
+    if (_bulkSelectedIds.size === 0) return;
+
+    const orders = getSelectedOrderMeta();
+    const count  = orders.length;
+
+    openUniversalModal({
+        iconTitle: `
+            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center shadow-lg flex-shrink-0">
+                <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-gray-800">Confirm ${count} Order${count !== 1 ? 's' : ''}</h2>
+                <p class="text-sm text-gray-500">Review before sending to kitchen</p>
+            </div>`,
+        orderInfo: `
+            <div class="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Selected Orders</div>
+            ${buildOrderListHtml(orders)}`,
+        message: `These <strong>${count} order${count !== 1 ? 's' : ''}</strong> will be moved to the <strong>Preparing</strong> queue and the kitchen will be notified.`,
+        showRejectionReason: false,
+        buttons: `
+            <button type="button" id="bulk-confirm-submit-btn"
+                    onclick="executeBulkConfirm(this)"
+                    class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Yes, Confirm All
+            </button>
+            <button type="button" onclick="closeUniversalModal()"
+                    class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
+                Cancel
+            </button>`
+    });
+}
+
+function executeBulkConfirm(button) {
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const ids = [..._bulkSelectedIds];
+    setButtonLoading(button, true, 'Confirming...', button.innerHTML);
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const promises  = ids.map(id =>
+        fetch(`/admin/orders/${id}/confirm`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        })
+        .then(r => r.json().then(data => ({ success: r.ok && data.success, id })))
+        .catch(() => ({ success: false, id }))
+    );
+
+    Promise.all(promises).then(results => {
+        isSubmitting = false;
+        closeUniversalModal();
+        clearBulkSelection();
+
+        const succeeded = results.filter(r => r.success).length;
+        const failed    = results.filter(r => !r.success).length;
+
+        if (succeeded > 0) {
+            const msg = failed > 0
+                ? `${succeeded} order${succeeded !== 1 ? 's' : ''} confirmed. ${failed} could not be confirmed.`
+                : `${succeeded} order${succeeded !== 1 ? 's' : ''} confirmed and moved to Preparing.`;
+            window.showToast(msg, false);
+            switchToTab('preparing');
+        } else {
+            window.showToast('No orders could be confirmed. They may already be confirmed or cancelled.', true);
+        }
+    });
+}
+
+function bulkMarkReady() {
+    if (_bulkSelectedIds.size === 0) return;
+
+    const orders = getSelectedOrderMeta();
+    const count  = orders.length;
+
+    openUniversalModal({
+        iconTitle: `
+            <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center shadow-lg flex-shrink-0">
+                <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-gray-800">Mark ${count} Order${count !== 1 ? 's' : ''} Ready</h2>
+                <p class="text-sm text-gray-500">Ready for customer pickup</p>
+            </div>`,
+        orderInfo: `
+            <div class="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Selected Orders</div>
+            ${buildOrderListHtml(orders)}`,
+        message: `These <strong>${count} order${count !== 1 ? 's' : ''}</strong> will be marked as <strong>Ready for Pickup</strong> and customers will be notified.`,
+        showRejectionReason: false,
+        buttons: `
+            <button type="button" id="bulk-ready-submit-btn"
+                    onclick="executeBulkMarkReady(this)"
+                    class="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Yes, Mark All Ready
+            </button>
+            <button type="button" onclick="closeUniversalModal()"
+                    class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
+                Cancel
+            </button>`
+    });
+}
+
+function executeBulkMarkReady(button) {
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const ids = [..._bulkSelectedIds];
+    setButtonLoading(button, true, 'Updating...', button.innerHTML);
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const promises  = ids.map(id =>
+        fetch(`/admin/orders/${id}/update-status`, {
+            method: 'PUT',
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ status: 'ready' }),
+        })
+        .then(r => r.json().then(data => ({ success: r.ok && data.success, id })))
+        .catch(() => ({ success: false, id }))
+    );
+
+    Promise.all(promises).then(results => {
+        isSubmitting = false;
+        closeUniversalModal();
+        clearBulkSelection();
+
+        const succeeded = results.filter(r => r.success).length;
+        const failed    = results.filter(r => !r.success).length;
+
+        if (succeeded > 0) {
+            const msg = failed > 0
+                ? `${succeeded} order${succeeded !== 1 ? 's' : ''} marked ready. ${failed} could not be updated.`
+                : `${succeeded} order${succeeded !== 1 ? 's' : ''} marked as Ready for Pickup.`;
+            window.showToast(msg, false);
+            switchToTab('ready');
+        } else {
+            window.showToast('No orders could be marked ready. They must be in Preparing status first.', true);
+        }
+    });
+}
+
+function bulkMarkAsPaid() {
+    if (_bulkSelectedIds.size === 0) return;
+
+    const orders = getSelectedOrderMeta();
+    const count  = orders.length;
+
+    openUniversalModal({
+        iconTitle: `
+            <div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center shadow-lg flex-shrink-0">
+                <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-black text-gray-800">Mark ${count} Order${count !== 1 ? 's' : ''} as Paid</h2>
+                <p class="text-sm text-gray-500">Cash on pickup — payment received</p>
+            </div>`,
+        orderInfo: `
+            <div class="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Selected Orders</div>
+            ${buildOrderListHtml(orders)}`,
+        message: `Confirm that cash payment has been collected for <strong>${count} order${count !== 1 ? 's' : ''}</strong>. Only cash orders that are not yet paid will be updated.`,
+        showRejectionReason: false,
+        buttons: `
+            <button type="button" id="bulk-paid-submit-btn"
+                    onclick="executeBulkMarkAsPaid(this)"
+                    class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Yes, Mark All as Paid
+            </button>
+            <button type="button" onclick="closeUniversalModal()"
+                    class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 hover:scale-105 transition-all duration-300 font-semibold">
+                Cancel
+            </button>`
+    });
+}
+
+function executeBulkMarkAsPaid(button) {
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const ids = [..._bulkSelectedIds];
+    setButtonLoading(button, true, 'Processing...', button.innerHTML);
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const promises  = ids.map(id =>
+        fetch(`/admin/orders/${id}/mark-as-paid`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        })
+        .then(r => r.json().then(data => ({ success: r.ok && data.success, id, message: data.message })))
+        .catch(() => ({ success: false, id }))
+    );
+
+    Promise.all(promises).then(results => {
+        isSubmitting = false;
+        closeUniversalModal();
+        clearBulkSelection();
+
+        const succeeded = results.filter(r => r.success).length;
+        const skipped   = results.filter(r => !r.success).length;
+
+        if (succeeded > 0) {
+            const msg = skipped > 0
+                ? `${succeeded} order${succeeded !== 1 ? 's' : ''} marked as paid. ${skipped} skipped (non-cash or already paid).`
+                : `${succeeded} order${succeeded !== 1 ? 's' : ''} marked as paid and added to transactions.`;
+            window.showToast(msg, false);
+        } else {
+            window.showToast('No orders were updated. Orders must be cash, completed, and unpaid.', true);
+        }
+    });
+}
+</script>
 @endsection

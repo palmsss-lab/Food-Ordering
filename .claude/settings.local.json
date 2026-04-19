@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(py -c ':*)",
+      "Bash(sed 's/id=\"//')",
+      "Bash(sed 's/\" parent.*//')"
+    ]
+  }
+}

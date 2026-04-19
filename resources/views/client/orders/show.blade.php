@@ -3,22 +3,22 @@
 @section('title', 'Order Details')
 
 @section('content')
-<div class="max-w-4xl mx-auto mt-32 px-4 mb-20">
+<div class="max-w-4xl mx-auto mt-24 md:mt-32 px-4 mb-20">
     
     <!-- Header with back button -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div class="flex items-center gap-3">
             <div class="bg-[#ea5a47] p-3 rounded-2xl shadow-lg">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
             </div>
-            <h1 class="text-4xl font-black text-gray-800">Order <span class="text-[#ea5a47]">Details</span></h1>
+            <h1 class="text-2xl sm:text-4xl font-black text-gray-800">Order <span class="text-[#ea5a47]">Details</span></h1>
         </div>
-        
-        <a href="{{ route('client.orders.index', ['tab' => $order->display_status]) }}" 
-           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <a href="{{ route('client.orders.index', ['tab' => $order->display_status]) }}"
+           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Orders
@@ -195,9 +195,6 @@
                 <div>
                     <p class="font-medium">{{ $item->item_name }}</p>
                     <p class="text-sm text-gray-500">Quantity: {{ $item->quantity }}</p>
-                    @if($item->special_instructions)
-                        <p class="text-xs text-gray-400 italic">Note: {{ $item->special_instructions }}</p>
-                    @endif
                 </div>
                 <div class="text-right">
                     <p class="font-bold">₱{{ number_format($item->price, 2) }}</p>
@@ -213,14 +210,71 @@
                 <span class="text-gray-600">Subtotal:</span>
                 <span>₱{{ number_format($order->subtotal, 2) }}</span>
             </div>
+
+            @php
+                $isPrivilege = in_array($order->discount_type, ['pwd', 'senior']);
+                $totalSaved  = ($order->promo_discount ?? 0) + ($order->discount ?? 0) + ($isPrivilege ? $order->tax : 0);
+            @endphp
+
+            {{-- Promotion discount row --}}
+            @if(($order->promo_discount ?? 0) > 0)
+            <div class="flex justify-between text-sm items-center">
+                <span class="text-green-700 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                    {{ $order->promo_label ?: 'Promotion' }}
+                </span>
+                <span class="font-semibold text-green-600">− ₱{{ number_format($order->promo_discount, 2) }}</span>
+            </div>
+            @endif
+
+            {{-- Voucher / PWD / Senior discount row --}}
+            @if(($order->discount ?? 0) > 0)
+            @php
+                $extraLabel = match($order->discount_type) {
+                    'pwd'     => 'PWD Discount (20%)',
+                    'senior'  => 'Senior Citizen Discount (20%)',
+                    'voucher' => 'Voucher' . ($order->discount_label ? ': ' . $order->discount_label : ''),
+                    default   => $order->discount_label ?: 'Discount',
+                };
+            @endphp
+            <div class="flex justify-between text-sm items-center">
+                <span class="text-green-700 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                    {{ $extraLabel }}
+                </span>
+                <span class="font-semibold text-green-600">− ₱{{ number_format($order->discount, 2) }}</span>
+            </div>
+            @if($isPrivilege)
             <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Tax:</span>
+                <span class="text-green-700">VAT Exempt</span>
+                <span class="font-semibold text-green-600">− ₱{{ number_format($order->tax, 2) }}</span>
+            </div>
+            @endif
+            @endif
+
+            @if(!$isPrivilege)
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-600">VAT (12%):</span>
                 <span>₱{{ number_format($order->tax, 2) }}</span>
             </div>
-            <div class="flex justify-between font-bold text-lg">
+            @endif
+
+            <div class="flex justify-between font-bold text-lg pt-2 border-t border-gray-100">
                 <span>Total:</span>
                 <span class="text-[#ea5a47]">₱{{ number_format($order->total, 2) }}</span>
             </div>
+
+            @if($totalSaved > 0)
+            <div class="flex justify-end">
+                <span class="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full font-medium">
+                    You saved ₱{{ number_format($totalSaved, 2) }}
+                </span>
+            </div>
+            @endif
         </div>
         
         <!-- Payment Instructions for Cash on Pickup -->
@@ -306,9 +360,21 @@
             </form>
         @endif
         
-        <button onclick="window.print()" 
-                class="px-6 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition-all">
-            Print Receipt
+        <a href="{{ route('client.orders.download', $order->order_number) }}"
+           data-no-loader
+           class="px-6 py-3 bg-[#ea5a47] text-white font-semibold rounded-xl hover:bg-[#c53030] transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Download Receipt
+        </a>
+
+        <button onclick="window.print()"
+                class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+            </svg>
+            Print
         </button>
     </div>
 
@@ -330,23 +396,166 @@
     @endif
 </div>
 
+{{-- Hidden print receipt --}}
+<div id="print-receipt">
+    <div class="receipt-wrap">
+
+        {{-- Header --}}
+        <div class="r-center" style="margin-bottom:14px;">
+            <div class="r-logo">2DINE-IN</div>
+            <div class="r-sm">San Juan Bautista, Goa, Camarines Sur</div>
+            <div class="r-sm">(054) 123 4567 &bull; Open Daily 10AM–10PM</div>
+        </div>
+
+        <div class="r-dash2"></div>
+        <div class="r-center r-bold" style="letter-spacing:2px; margin:8px 0;">ORDER RECEIPT</div>
+        <div class="r-dash1"></div>
+
+        {{-- Order info --}}
+        <table class="r-table">
+            <tr><td class="r-label">Date</td><td class="r-val">{{ \Carbon\Carbon::parse($order->ordered_at ?? $order->created_at)->timezone('Asia/Manila')->format('M d, Y h:i A') }}</td></tr>
+            <tr><td class="r-label">Order #</td><td class="r-val r-bold">{{ $order->order_number }}</td></tr>
+            <tr><td class="r-label">Customer</td><td class="r-val">{{ $order->customer_name }}</td></tr>
+            <tr><td class="r-label">Status</td><td class="r-val r-bold">{{ strtoupper($order->order_status) }}</td></tr>
+            <tr><td class="r-label">Payment</td><td class="r-val">{{ $paymentMethod ? ucwords(str_replace('_', ' ', $paymentMethod)) : 'N/A' }}</td></tr>
+            @if($order->latestPayment?->reference_number)
+            <tr><td class="r-label">Ref #</td><td class="r-val r-mono">{{ $order->latestPayment->reference_number }}</td></tr>
+            @endif
+        </table>
+
+        <div class="r-dash1"></div>
+        <div class="r-bold" style="margin-bottom:8px;">ORDERED ITEMS</div>
+
+        @foreach($order->items as $item)
+        <div class="r-item">
+            <span>{{ $item->quantity }}x {{ $item->item_name }}</span>
+            <span>&#8369;{{ number_format($item->subtotal, 2) }}</span>
+        </div>
+        @endforeach
+
+        <div class="r-dash1"></div>
+
+        {{-- Totals --}}
+        @php
+            $pIsPrivilege = in_array($order->discount_type, ['pwd', 'senior']);
+            $pTotalSaved  = ($order->promo_discount ?? 0) + ($order->discount ?? 0) + ($pIsPrivilege ? $order->tax : 0);
+            $pExtraLabel  = match($order->discount_type) {
+                'pwd'     => 'PWD Discount (20%)',
+                'senior'  => 'Senior Citizen Discount (20%)',
+                'voucher' => 'Voucher' . ($order->discount_label ? ': ' . $order->discount_label : ''),
+                default   => $order->discount_label ?: 'Discount',
+            };
+        @endphp
+        <table class="r-table">
+            <tr><td class="r-label">Subtotal</td><td class="r-val">&#8369;{{ number_format($order->subtotal, 2) }}</td></tr>
+            @if(($order->promo_discount ?? 0) > 0)
+            <tr><td class="r-label">{{ $order->promo_label ?: 'Promotion' }}</td><td class="r-val">&minus;&#8369;{{ number_format($order->promo_discount, 2) }}</td></tr>
+            @endif
+            @if(($order->discount ?? 0) > 0)
+            <tr><td class="r-label">{{ $pExtraLabel }}</td><td class="r-val">&minus;&#8369;{{ number_format($order->discount, 2) }}</td></tr>
+            @if($pIsPrivilege)
+            <tr><td class="r-label">VAT Exempt</td><td class="r-val">&minus;&#8369;{{ number_format($order->tax, 2) }}</td></tr>
+            @endif
+            @endif
+            @if(!$pIsPrivilege)
+            <tr><td class="r-label">VAT (12%)</td><td class="r-val">&#8369;{{ number_format($order->tax, 2) }}</td></tr>
+            @endif
+        </table>
+
+        <div class="r-dash2"></div>
+        <div class="r-total">
+            <span>TOTAL</span>
+            <span>&#8369;{{ number_format($order->total, 2) }}</span>
+        </div>
+
+        @if($pTotalSaved > 0)
+        <div class="r-savings">You saved &#8369;{{ number_format($pTotalSaved, 2) }}</div>
+        @endif
+
+        <div class="r-dash2" style="margin-top:14px;"></div>
+
+        {{-- Footer --}}
+        <div class="r-center" style="margin-top:12px;">
+            <div class="r-bold">Thank you for dining with us!</div>
+            <div class="r-sm" style="margin-top:4px;">Please come again!</div>
+            <div class="r-xs" style="margin-top:10px;">Printed: {{ now()->timezone('Asia/Manila')->format('M d, Y h:i A') }}</div>
+            <div class="r-xs">This serves as your official receipt.</div>
+        </div>
+
+    </div>
+</div>
+
 <style>
+    #print-receipt { display: none; }
+
     @media print {
-        body * {
-            visibility: hidden;
-        }
-        .bg-white, .bg-white * {
-            visibility: visible;
-        }
-        .bg-white {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-        }
-        button, a, .flex.justify-end {
-            display: none !important;
-        }
+        @page { size: A4 portrait; margin: 15mm; }
+        .receipt-wrap { font-size: 14px !important; width: 480px !important; }
+        .r-logo  { font-size: 26px !important; }
+        .r-total { font-size: 18px !important; }
+        .r-sm    { font-size: 12px !important; }
+        .r-xs    { font-size: 11px !important; }
     }
+
+    .receipt-wrap {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 13px;
+        line-height: 1.75;
+        width: 480px;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 28px 24px;
+        color: #111;
+    }
+    .r-logo   { font-size: 24px; font-weight: 900; letter-spacing: 4px; }
+    .r-bold   { font-weight: bold; }
+    .r-center { text-align: center; }
+    .r-sm     { font-size: 12px; color: #444; }
+    .r-xs     { font-size: 11px; color: #888; }
+    .r-mono   { font-family: 'Courier New', monospace; font-size: 12px; }
+    .r-dash1  { border-top: 1px dashed #555; margin: 10px 0; }
+    .r-dash2  { border-top: 2px dashed #222; margin: 10px 0; }
+    .r-table  { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .r-label  { color: #555; width: 42%; padding: 2px 0; }
+    .r-val    { text-align: right; padding: 2px 0; }
+    .r-item   { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .r-note   { font-size: 12px; color: #666; padding-left: 14px; margin-bottom: 5px; }
+    .r-total  { display: flex; justify-content: space-between; font-weight: 900; font-size: 16px; margin: 5px 0; }
+    .r-savings{ text-align: right; font-size: 12px; color: #444; }
 </style>
+
+<script>
+(function () {
+    var _parent, _next;
+
+    window.addEventListener('beforeprint', function () {
+        var el = document.getElementById('print-receipt');
+        if (!el) return;
+        _parent = el.parentNode;
+        _next   = el.nextSibling;
+        document.body.appendChild(el);
+        el.style.display = 'block';
+        Array.from(document.body.children).forEach(function (c) {
+            if (c !== el) {
+                c.dataset.printSave = c.style.cssText;
+                c.style.setProperty('display', 'none', 'important');
+            }
+        });
+    });
+
+    window.addEventListener('afterprint', function () {
+        var el = document.getElementById('print-receipt');
+        if (!el) return;
+        if (_parent) { _next ? _parent.insertBefore(el, _next) : _parent.appendChild(el); }
+        el.style.display = '';
+        _parent = _next = null;
+        Array.from(document.body.children).forEach(function (c) {
+            if (c.dataset.printSave !== undefined) {
+                c.style.cssText = c.dataset.printSave;
+                delete c.dataset.printSave;
+            }
+        });
+    });
+}());
+</script>
 @endsection

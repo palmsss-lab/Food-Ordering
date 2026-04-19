@@ -9,11 +9,14 @@ use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Promotion;
+use App\Models\Voucher;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
 {
@@ -249,17 +252,32 @@ class CartController extends Controller
                 'quantity' => $item->quantity,
                 'price' => $item->price,
                 'subtotal' => $itemSubtotal,
-                'special_instructions' => $item->special_instructions,
             ];
         }
         
-        $tax = $subtotal * 0.12;
-        $total = $subtotal + $tax;
-        
+        // Clear any stale discount sessions from a previous checkout attempt
+        session()->forget(['checkout_discount', 'checkout_promo']);
+
         // Store selected items in session for place order
         session(['checkout_items_ids' => $selectedItemIds]);
-        
-        return view('client.cart.checkout.index', compact('cartItemsForDisplay', 'subtotal', 'tax', 'total'));
+
+        // Auto-apply active promotion (stored separately so voucher/pwd never wipes it)
+        $activePromo = Promotion::todayPromo();
+        if ($activePromo) {
+            $promoDiscount = round($subtotal * ($activePromo->discount_percentage / 100), 2);
+            session(['checkout_promo' => [
+                'promo_id'       => $activePromo->id,
+                'discountAmount' => $promoDiscount,
+                'label'          => $activePromo->title . ' (' . number_format($activePromo->discount_percentage, 0) . '% off)',
+            ]]);
+            $tax   = round(($subtotal - $promoDiscount) * 0.12, 2);
+            $total = round(($subtotal - $promoDiscount) + $tax, 2);
+        } else {
+            $tax   = round($subtotal * 0.12, 2);
+            $total = round($subtotal + $tax, 2);
+        }
+
+        return view('client.cart.checkout.index', compact('cartItemsForDisplay', 'subtotal', 'tax', 'total', 'activePromo'));
     }
 
     /**
@@ -281,16 +299,22 @@ class CartController extends Controller
                 ->with('error', 'No items selected for checkout. Please try again.');
         }
         
-        // Validate the request
-        $request->validate([
+        // Validate the request — redirect to cart (not back) to avoid GET /checkout
+        $validator = Validator::make($request->all(), [
             'payment_method' => 'required|in:cash,gcash,card',
-            'notes' => 'nullable|string',
-            'gcash_number' => 'required_if:payment_method,gcash|nullable|string',
-            'card_number' => 'required_if:payment_method,card|nullable|string',
-            'card_name' => 'required_if:payment_method,card|nullable|string',
-            'card_expiry' => 'required_if:payment_method,card|nullable|string',
-            'card_cvv' => 'required_if:payment_method,card|nullable|string',
+            'notes'          => 'nullable|string|max:500',
+            'gcash_number'   => ['required_if:payment_method,gcash', 'nullable', 'string', 'regex:/^0?9\d{9}$/'],
+            'card_number'    => ['required_if:payment_method,card', 'nullable', 'regex:/^\d[\d\s]{11,17}\d$/'],
+            'card_name'      => 'required_if:payment_method,card|nullable|string|max:100',
+            'card_expiry'    => ['required_if:payment_method,card', 'nullable', 'string', 'regex:/^(0[1-9]|1[0-2])\/\d{2}$/'],
+            'card_cvv'       => 'required_if:payment_method,card|nullable|digits_between:3,4',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('client.cart.index')
+                ->with('error', 'Payment details are invalid. Please try again.')
+                ->withErrors($validator);
+        }
         
         // Get authenticated user
         $user = Auth::user();
@@ -313,35 +337,109 @@ class CartController extends Controller
         }
         
         DB::beginTransaction();
-        
+
         try {
+            // Re-validate stock inside the transaction with a pessimistic lock
+            // to prevent race conditions when multiple users order the same item.
+            $lockedMenuItems = [];
+            foreach ($cartItems as $cartItem) {
+                $menuItem = MenuItem::lockForUpdate()->find($cartItem->menu_item_id);
+                if (!$menuItem || $menuItem->stock < $cartItem->quantity) {
+                    $available = $menuItem ? $menuItem->stock : 0;
+                    throw new \Exception("Sorry, '{$cartItem->menuItem->name}' only has {$available} left in stock.");
+                }
+                $lockedMenuItems[$cartItem->menu_item_id] = $menuItem;
+            }
+
             // Calculate totals
             $subtotal = 0;
             foreach ($cartItems as $item) {
                 $subtotal += $item->price * $item->quantity;
             }
-            $tax = $subtotal * 0.12;
-            $total = $subtotal + $tax;
-            
+
+            // --- Step 1: Apply promotion discount (always stacks, stored separately) ---
+            $promoSessionData = session('checkout_promo');
+            $promoDiscount    = 0;
+            $promoLabel       = null;
+            $promotionId      = null;
+
+            if ($promoSessionData) {
+                $promo = Promotion::find($promoSessionData['promo_id'] ?? null);
+                if ($promo && $promo->isRunning()) {
+                    $promoDiscount = round($subtotal * ($promo->discount_percentage / 100), 2);
+                    $promoLabel    = $promo->title . ' (' . number_format($promo->discount_percentage, 0) . '% off)';
+                    $promotionId   = $promo->id;
+                }
+            }
+
+            $postPromoSubtotal = $subtotal - $promoDiscount;
+
+            // --- Step 2: Apply extra discount (voucher / pwd / senior) on top of promo ---
+            $discountData  = session('checkout_discount');
+            $discount      = 0;
+            $voucherId     = null;
+            $discountType  = null;
+            $discountLabel = null;
+
+            if ($discountData) {
+                $dtype = $discountData['type'] ?? 'none';
+
+                if ($dtype === 'pwd' || $dtype === 'senior') {
+                    // Applied to post-promo amount; VAT exempt
+                    $discount      = round($postPromoSubtotal * 0.20, 2);
+                    $tax           = 0;
+                    $total         = round($postPromoSubtotal - $discount, 2);
+                    $discountType  = $dtype;
+                    $discountLabel = $discountData['label'];
+                } elseif ($dtype === 'voucher') {
+                    $voucher = Voucher::find($discountData['voucher_id'] ?? null);
+                    if ($voucher && $voucher->isValid($subtotal)) {
+                        $discount      = $voucher->calculateDiscount($postPromoSubtotal);
+                        $taxBase       = max(0, $postPromoSubtotal - $discount);
+                        $tax           = round($taxBase * 0.12, 2);
+                        $total         = round($taxBase + $tax, 2);
+                        $voucherId     = $voucher->id;
+                        $discountType  = 'voucher';
+                        $discountLabel = $voucher->label();
+                    } else {
+                        // Voucher became invalid — fall back to promo-only
+                        $tax   = round($postPromoSubtotal * 0.12, 2);
+                        $total = round($postPromoSubtotal + $tax, 2);
+                    }
+                } else {
+                    $tax   = round($postPromoSubtotal * 0.12, 2);
+                    $total = round($postPromoSubtotal + $tax, 2);
+                }
+            } else {
+                $tax   = round($postPromoSubtotal * 0.12, 2);
+                $total = round($postPromoSubtotal + $tax, 2);
+            }
+
             // IMPORTANT: Set payment_status based on payment method
             $paymentStatus = ($request->payment_method === 'cash') ? 'cash on pickup' : 'paid';
-            
+
             // Create order
             $order = Order::create([
-                'order_number' => $this->generateOrderNumber(),
-                'user_id' => Auth::id(),
-                'customer_name' => $user->name,
+                'order_number'   => $this->generateOrderNumber(),
+                'user_id'        => Auth::id(),
+                'customer_name'  => $user->name,
                 'customer_email' => $user->email,
                 'customer_phone' => $user->phone ?? '',
-                'order_type' => 'pickup',
-                'payment_status' => $paymentStatus, // 'cash on pickup' for cash, 'paid' for GCash/Card
-                'order_status' => 'pending',
-                'subtotal' => $subtotal,
-                'tax' => $tax,
-                'discount' => 0,
-                'total' => $total,
-                'notes' => $request->notes,
-                'ordered_at' => now(),
+                'order_type'     => 'pickup',
+                'payment_status' => $paymentStatus,
+                'order_status'   => 'pending',
+                'subtotal'       => $subtotal,
+                'tax'            => $tax,
+                'discount'       => $discount,
+                'promo_discount' => $promoDiscount,
+                'promo_label'    => $promoLabel,
+                'promotion_id'   => $promotionId,
+                'voucher_id'     => $voucherId,
+                'discount_type'  => $discountType,
+                'discount_label' => $discountLabel,
+                'total'          => $total,
+                'notes'          => $request->notes,
+                'ordered_at'     => now(),
             ]);
             
             Log::info('Order created', [
@@ -360,11 +458,10 @@ class CartController extends Controller
                     'quantity' => $cartItem->quantity,
                     'price' => $cartItem->price,
                     'subtotal' => $cartItem->price * $cartItem->quantity,
-                    'special_instructions' => $cartItem->special_instructions,
                 ]);
                 
-                // Decrease stock
-                $cartItem->menuItem->decrement('stock', $cartItem->quantity);
+                // Decrease stock using the locked instance
+                $lockedMenuItems[$cartItem->menu_item_id]->decrement('stock', $cartItem->quantity);
             }
             
             // Handle payment based on method
@@ -412,11 +509,20 @@ class CartController extends Controller
             
             // Delete the checked out cart items
             CartItem::whereIn('id', $selectedItemIds)->delete();
-            
+
+            // Mark user's voucher claim as used (used_count is derived from this table, not cached)
+            if ($voucherId) {
+                DB::table('user_vouchers')
+                    ->where('user_id', Auth::id())
+                    ->where('voucher_id', $voucherId)
+                    ->whereNull('used_at')
+                    ->update(['used_at' => now(), 'order_id' => $order->id]);
+            }
+
             DB::commit();
-            
+
             // Clear checkout session
-            session()->forget('checkout_items_ids');
+            session()->forget(['checkout_items_ids', 'checkout_discount', 'checkout_promo']);
             
             // Redirect based on payment method
             if ($request->payment_method === 'cash') {
@@ -429,12 +535,116 @@ class CartController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Place order error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return back()->with('error', 'Failed to place order: ' . $e->getMessage());
+            Log::error('Place order error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            // Show stock/availability messages directly; hide all other internal details
+            $userMessage = str_starts_with($e->getMessage(), "Sorry,")
+                ? $e->getMessage()
+                : 'Failed to place your order. Please try again.';
+            // Redirect to cart instead of back() — back() would try GET /client/checkout which is POST-only
+            return redirect()->route('client.cart.index')->with('error', $userMessage);
         }
     }
     
+    /**
+     * AJAX: Validate and apply a discount (voucher / pwd / senior).
+     * Returns discount_amount, new tax, new total, and a label.
+     */
+    public function applyDiscount(Request $request)
+    {
+        $request->validate([
+            'discount_type' => 'required|in:voucher,pwd,senior,none',
+            'voucher_code'  => 'required_if:discount_type,voucher|nullable|string',
+            'subtotal'      => 'required|numeric|min:0',
+        ]);
+
+        if ($request->discount_type === 'none') {
+            // Promo lives in its own session key; just clear the extra discount.
+            session()->forget('checkout_discount');
+            return response()->json(['success' => true]);
+        }
+
+        $subtotal = (float) $request->subtotal;
+        $type     = $request->discount_type;
+
+        // Recalculate promo from DB each time so a stale session never silently drops it
+        $promoSession  = session('checkout_promo');
+        $promoDiscount = 0;
+        if ($promoSession) {
+            $promo = \App\Models\Promotion::find($promoSession['promo_id'] ?? null);
+            if ($promo && $promo->isRunning()) {
+                $promoDiscount = round($subtotal * ($promo->discount_percentage / 100), 2);
+                session(['checkout_promo' => array_merge($promoSession, ['discountAmount' => $promoDiscount])]);
+            }
+        }
+        $postPromoSub = max(0, $subtotal - $promoDiscount);
+
+        if ($type === 'pwd' || $type === 'senior') {
+            // PH law: 20% off post-promo amount + VAT exempt
+            $discountAmount = round($postPromoSub * 0.20, 2);
+            $tax            = 0;
+            $total          = round($postPromoSub - $discountAmount, 2);
+            $label          = $type === 'pwd' ? 'PWD Discount (20%)' : 'Senior Citizen Discount (20%)';
+
+            session(['checkout_discount' => compact('type', 'discountAmount', 'tax', 'total', 'label')]);
+
+            return response()->json([
+                'success'         => true,
+                'discount_amount' => $discountAmount,
+                'tax'             => $tax,
+                'total'           => $total,
+                'label'           => $label,
+            ]);
+        }
+
+        // Voucher
+        $code    = strtoupper(trim($request->voucher_code));
+        $voucher = Voucher::where('code', $code)->first();
+
+        if (!$voucher) {
+            return response()->json(['success' => false, 'message' => 'Voucher not found.'], 422);
+        }
+
+        // Must have claimed this voucher
+        if (!$voucher->isAvailableFor(Auth::id())) {
+            return response()->json(['success' => false, 'message' => 'You have not collected this voucher.'], 422);
+        }
+
+        if (!$voucher->isValid($subtotal)) {
+            $reason = 'This voucher is no longer valid.';
+            if (!$voucher->is_active)                              $reason = 'This voucher is inactive.';
+            elseif ($voucher->expires_at?->isPast())               $reason = 'This voucher has expired.';
+            elseif ($voucher->max_uses && $voucher->actualUsedCount() >= $voucher->max_uses) $reason = 'This voucher has reached its maximum number of redemptions.';
+            elseif ($voucher->min_order_amount && $subtotal < (float) $voucher->min_order_amount)
+                $reason = 'Minimum order amount of ₱' . number_format($voucher->min_order_amount, 2) . ' required.';
+
+            return response()->json(['success' => false, 'message' => $reason], 422);
+        }
+
+        $discountAmount = $voucher->calculateDiscount($postPromoSub);
+        $taxBase        = max(0, $postPromoSub - $discountAmount);
+        $tax            = round($taxBase * 0.12, 2);
+        $total          = round($taxBase + $tax, 2);
+        $label          = $voucher->label();
+
+        session(['checkout_discount' => [
+            'type'           => 'voucher',
+            'voucher_id'     => $voucher->id,
+            'voucher_code'   => $voucher->code,
+            'discountAmount' => $discountAmount,
+            'tax'            => $tax,
+            'total'          => $total,
+            'label'          => $label,
+        ]]);
+
+        return response()->json([
+            'success'         => true,
+            'discount_amount' => $discountAmount,
+            'tax'             => $tax,
+            'total'           => $total,
+            'label'           => $label,
+        ]);
+    }
+
     /**
      * Get cart items for checkout (without creating order)
      */
@@ -456,7 +666,6 @@ class CartController extends Controller
                     'quantity' => $item->quantity,
                     'price' => $item->price,
                     'subtotal' => $item->price * $item->quantity,
-                    'special_instructions' => $item->special_instructions,
                 ];
             });
     }

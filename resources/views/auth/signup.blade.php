@@ -188,16 +188,24 @@
                 <button type="submit"
                         id="signup-btn"
                         class="w-full bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-4 px-4 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2 group mt-4">
-                    <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Default icon -->
+                    <svg id="signup-btn-icon" class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                     </svg>
-                    <span>Create Account</span>
+                    <!-- Spinner (hidden by default) -->
+                    <svg id="signup-btn-spinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span id="signup-btn-text">Create Account</span>
                 </button>
             </form>
-            
+
+            <!-- Divider -->
+
             <div class="text-center mt-6 pt-4 border-t border-gray-100">
                 <p class="text-gray-600">
-                    Already have an account? 
+                    Already have an account?
                     <a href="{{ route('login.form') }}" class="text-[#ea5a47] font-semibold hover:text-[#c53030] transition-colors hover:underline">
                         Sign in here
                     </a>
@@ -227,24 +235,107 @@ function togglePassword(inputId, button) {
     }
 }
 
+// ========== REAL-TIME BLUR VALIDATION ==========
+document.addEventListener('DOMContentLoaded', function () {
+    function showFieldError(input, message) {
+        clearFieldError(input);
+        input.classList.add('border-red-500', 'bg-red-50');
+        const err = document.createElement('p');
+        err.className = 'field-inline-error text-red-500 text-xs mt-1';
+        err.textContent = message;
+        // Insert after the input's parent wrapper (handles password relative div)
+        const wrapper = input.closest('.relative') || input.parentElement;
+        wrapper.parentElement.appendChild(err);
+    }
+
+    function clearFieldError(input) {
+        input.classList.remove('border-red-500', 'bg-red-50');
+        const wrapper = input.closest('.relative') || input.parentElement;
+        const prev = wrapper.parentElement.querySelector('.field-inline-error');
+        if (prev) prev.remove();
+    }
+
+    // Email format
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('blur', function () {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (this.value && !re.test(this.value)) {
+                showFieldError(this, 'Please enter a valid email address (e.g. user@example.com).');
+            } else {
+                clearFieldError(this);
+            }
+        });
+        emailInput.addEventListener('input', function () { if (this.value) clearFieldError(this); });
+    }
+
+    // Password minimum length
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+        passwordInput.addEventListener('blur', function () {
+            if (this.value && this.value.length < 6) {
+                showFieldError(this, 'Password must be at least 6 characters long.');
+            } else {
+                clearFieldError(this);
+            }
+        });
+        passwordInput.addEventListener('input', function () {
+            if (this.value.length >= 6) clearFieldError(this);
+        });
+    }
+
+    // Confirm password match
+    const confirmInput = document.getElementById('password_confirmation');
+    if (confirmInput) {
+        confirmInput.addEventListener('blur', function () {
+            const pw = document.getElementById('password');
+            if (this.value && pw && this.value !== pw.value) {
+                showFieldError(this, 'Passwords do not match.');
+            } else {
+                clearFieldError(this);
+            }
+        });
+        confirmInput.addEventListener('input', function () {
+            const pw = document.getElementById('password');
+            if (pw && this.value === pw.value) clearFieldError(this);
+        });
+    }
+});
+
 // AJAX Form Submission - Shows ALL errors with proper alignment
 document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signup-form');
     let isSubmitting = false;
     
+    const signupBtn     = document.getElementById('signup-btn');
+    const signupIcon    = document.getElementById('signup-btn-icon');
+    const signupSpinner = document.getElementById('signup-btn-spinner');
+    const signupBtnText = document.getElementById('signup-btn-text');
+
+    function setSignupLoading(loading) {
+        signupBtn.disabled = loading;
+        signupBtn.classList.toggle('opacity-80', loading);
+        signupBtn.classList.toggle('cursor-not-allowed', loading);
+        signupBtn.classList.toggle('hover:scale-[1.02]', !loading);
+        signupIcon.classList.toggle('hidden', loading);
+        signupSpinner.classList.toggle('hidden', !loading);
+        signupBtnText.textContent = loading ? 'Creating Account...' : 'Create Account';
+    }
+
     if (signupForm) {
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             if (isSubmitting) return;
             isSubmitting = true;
-            
+            setSignupLoading(true);
+
             const formData = new FormData(signupForm);
             const formDataObj = {};
             formData.forEach((value, key) => {
                 formDataObj[key] = value;
             });
-            
+
             if (window.showLoader) window.showLoader();
             
             try {
@@ -271,7 +362,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1000);
                 } else {
                     if (window.hideLoader) window.hideLoader();
-                    
+                    setSignupLoading(false);
+
                     // Show ALL errors with proper formatting and alignment
                     if (window.showToast && data.errors && data.errors.length > 0) {
                         // Create an HTML formatted error list for better alignment
@@ -316,12 +408,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('password_confirmation')?.classList.add('border-red-500', 'bg-red-50');
                         }
                         
-                        // Remove highlighting after 3 seconds
+                        // Remove highlighting after 10 seconds to give users enough time to fix fields
                         setTimeout(() => {
                             document.querySelectorAll('.border-red-500').forEach(el => {
                                 el.classList.remove('border-red-500', 'bg-red-50');
                             });
-                        }, 3000);
+                        }, 10000);
                     }
                     
                     isSubmitting = false;
@@ -329,8 +421,12 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('Signup error:', error);
                 if (window.hideLoader) window.hideLoader();
+                setSignupLoading(false);
                 if (window.showToast) {
-                    window.showToast('Something went wrong. Please try again.', true);
+                    const msg = navigator.onLine
+                        ? 'Our server had a hiccup. Please try again in a moment.'
+                        : 'No internet connection detected. Please check your network and retry.';
+                    window.showToast(msg, true);
                 }
                 isSubmitting = false;
             }

@@ -12,7 +12,7 @@
 
     <div class="relative z-10 max-w-3xl mx-auto">
         <!-- Header with back button -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <div class="absolute inset-0 bg-[#ea5a47] rounded-lg blur-md opacity-30"></div>
@@ -22,7 +22,7 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800">
+                <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                     Edit <span class="text-[#ea5a47]">Category</span>
                 </h1>
             </div>
@@ -77,7 +77,8 @@
 
                     <!-- Form Actions -->
                     <div class="flex items-center gap-3 pt-6 border-t border-gray-200">
-                        <button type="submit" 
+                        <button type="submit"
+                                data-loading-text="Saving Changes..."
                                 class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-semibold rounded-xl hover:from-[#c53030] hover:to-[#ea5a47] transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />

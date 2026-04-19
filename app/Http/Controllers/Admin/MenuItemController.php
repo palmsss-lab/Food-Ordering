@@ -42,7 +42,9 @@ class MenuItemController extends Controller
             return Category::select('id', 'name')->orderBy('name')->get();
         });
         
-        return view('admin.menu-items.index', compact('menuItems', 'categories'));
+        $archivedItems = MenuItem::onlyTrashed()->with('category')->orderBy('deleted_at', 'desc')->get();
+
+        return view('admin.menu-items.index', compact('menuItems', 'categories', 'archivedItems'));
     }
 
     /**
@@ -206,14 +208,57 @@ class MenuItemController extends Controller
      */
     public function destroy(MenuItem $menuItem)
     {
-        // Delete image file if exists
+        $menuItem->delete(); // soft delete — moves to archive
+
+        Cache::forget('menu_items');
+
+        return redirect()->route('admin.menu-items.index')
+            ->with('success', "\"{$menuItem->name}\" has been archived.");
+    }
+
+    public function restore($id)
+    {
+        $menuItem = MenuItem::onlyTrashed()->findOrFail($id);
+        $menuItem->restore();
+
+        Cache::forget('menu_items');
+
+        return redirect()->route('admin.menu-items.index')
+            ->with('success', "\"{$menuItem->name}\" has been restored.");
+    }
+
+    public function forceDelete($id)
+    {
+        $menuItem = MenuItem::onlyTrashed()->findOrFail($id);
+
         if ($menuItem->image_path) {
             Storage::disk('public')->delete($menuItem->image_path);
         }
-        
-        $menuItem->delete();
+
+        $menuItem->forceDelete();
+
+        Cache::forget('menu_items');
 
         return redirect()->route('admin.menu-items.index')
-            ->with('success', 'Menu item deleted successfully.');
+            ->with('success', "\"{$menuItem->name}\" has been permanently deleted.");
+    }
+
+    /**
+     * Quickly toggle a menu item between in-stock and out-of-stock.
+     * Out-of-stock = stock set to 0. Restoring sets stock to 50 as a default.
+     */
+    public function toggleStock(MenuItem $menuItem)
+    {
+        if ($menuItem->stock > 0) {
+            $menuItem->update(['stock' => 0]);
+            $msg = "\"{$menuItem->name}\" marked as out of stock.";
+        } else {
+            $menuItem->update(['stock' => 50]);
+            $msg = "\"{$menuItem->name}\" is back in stock (stock set to 50 — update in Edit if needed).";
+        }
+
+        Cache::forget('menu_items');
+
+        return back()->with('success', $msg);
     }
 }

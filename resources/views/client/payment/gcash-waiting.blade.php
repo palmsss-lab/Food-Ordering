@@ -3,7 +3,7 @@
 @section('title', 'Payment Received - Awaiting Confirmation')
 
 @section('content')
-<div class="max-w-4xl mx-auto mt-32 px-4 mb-20">
+<div class="max-w-4xl mx-auto mt-24 md:mt-32 px-4 mb-20">
     
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
@@ -12,7 +12,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         </div>
-        <h1 class="text-4xl font-black text-gray-800">Payment <span class="text-[#ea5a47]">Received</span></h1>
+        <h1 class="text-2xl sm:text-4xl font-black text-gray-800">Payment <span class="text-[#ea5a47]">Received</span></h1>
     </div>
 
     <!-- Main Card -->
@@ -115,12 +115,12 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="{{ route('client.orders.index', ['tab' => 'pending']) }}" 
-               class="px-8 py-3 bg-[#ea5a47] text-white font-semibold rounded-xl hover:bg-[#c53030] transition-all">
+            <a href="{{ route('client.orders.index', ['tab' => 'pending']) }}"
+               class="w-full sm:w-auto px-8 py-3 bg-[#ea5a47] text-white font-semibold rounded-xl hover:bg-[#c53030] transition-all text-center">
                 View My Orders
             </a>
-            <a href="{{ route('client.menu') }}" 
-               class="px-8 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition-all">
+            <a href="{{ route('client.menu') }}"
+               class="w-full sm:w-auto px-8 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition-all text-center">
                 Continue Shopping
             </a>
         </div>

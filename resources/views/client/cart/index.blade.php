@@ -47,7 +47,7 @@
             
             <!-- Message -->
             <p class="text-gray-600 mb-2" id="modal-message">Are you sure you want to remove this item from your cart?</p>
-            <p class="text-sm text-gray-500 mb-8">This action cannot be undone.</p>
+            <p class="text-sm text-gray-500 mb-8">You can re-add it from the menu anytime.</p>
             
             <!-- Item preview (for single item removal) -->
             <div id="modal-item-preview" class="bg-[#fdf7f2] rounded-xl p-4 mb-8 flex items-center gap-4 hidden">
@@ -86,7 +86,7 @@
 <form id="checkout-form" method="POST" action="{{ route('client.checkout') }}">
     @csrf
     <input type="hidden" name="selected_items" id="selected-items-input" value="">
-    <div class="max-w-6xl mx-auto mt-32 px-4">
+    <div class="max-w-6xl mx-auto mt-24 md:mt-32 px-4">
         
         <!-- Header with food icon -->
         <div class="flex items-center gap-3 mb-8">  
@@ -95,7 +95,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
             </div>
-            <h1 class="text-4xl font-black text-gray-800">Your <span class="text-[#ea5a47]">Cart</span></h1>
+            <h1 class="text-2xl sm:text-4xl font-black text-gray-800">Your <span class="text-[#ea5a47]">Cart</span></h1>
         </div>
 
         <div id="cart-container" class="space-y-6">
@@ -139,15 +139,32 @@
                     </div>
                 </div>
             @else
+                @php $cartPromoCheck = \App\Models\Promotion::todayPromo(); @endphp
+                @if($cartPromoCheck)
+                <div class="rounded-2xl p-4 mb-4 border-2 flex items-center gap-3"
+                     style="background-color: {{ $cartPromoCheck->banner_color }}12; border-color: {{ $cartPromoCheck->banner_color }}35">
+                    <div class="text-xl flex-shrink-0">🎉</div>
+                    <div>
+                        <p class="font-bold text-sm" style="color: {{ $cartPromoCheck->banner_color }}">
+                            {{ $cartPromoCheck->title }} — {{ number_format($cartPromoCheck->discount_percentage, 0) }}% OFF applied to all items
+                        </p>
+                        @if($cartPromoCheck->description)
+                            <p class="text-xs text-gray-500 mt-0.5">{{ $cartPromoCheck->description }}</p>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 <!-- Cart Items Container -->
-                <div class="bg-[#fdf7f2] rounded-3xl shadow-xl overflow-hidden">
+                <div class="overflow-x-auto rounded-3xl shadow-xl">
+                <div class="bg-[#fdf7f2] min-w-[640px] overflow-hidden rounded-3xl">
                     <!-- Header Bar with Select All -->
                     <div class="bg-[#ea5a47] text-white px-6 py-4">
-                        <div class="grid grid-cols-12 gap-4 items-center">
+                        <div class="hidden sm:grid grid-cols-12 gap-4 items-center">
                             <div class="col-span-5">
                                 <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" 
-                                           id="select-all-checkbox" 
+                                    <input type="checkbox"
+                                           id="select-all-checkbox"
                                            class="w-5 h-5 rounded-lg cursor-pointer accent-white"
                                            onchange="toggleSelectAll()">
                                     <span class="font-semibold text-sm uppercase tracking-wider">Select All</span>
@@ -168,18 +185,44 @@
                                 </button>
                             </div>
                         </div>
+                        {{-- Mobile header --}}
+                        <div class="sm:hidden flex items-center justify-between">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox"
+                                       id="select-all-checkbox-mobile"
+                                       class="w-5 h-5 rounded-lg cursor-pointer accent-white"
+                                       onchange="toggleSelectAll()">
+                                <span class="font-semibold text-sm uppercase tracking-wider">Select All</span>
+                            </label>
+                            <button type="button"
+                                    onclick="showBulkDeleteModal()"
+                                    id="delete-selected-btn-mobile"
+                                    class="text-white hover:text-red-200 transition-all duration-200 px-3 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Items -->
+                    @php
+                        $cartPromo          = \App\Models\Promotion::todayPromo();
+                        $cartPromoPercent   = $cartPromo ? $cartPromo->discount_percentage : 0;
+                    @endphp
                     @foreach($cartItems as $item)
                         @php
-                            $menuItem = $item->menuItem;
-                            $stock = $menuItem->stock ?? 0;
-                            $stockColor = $stock > 5 ? 'green' : ($stock > 0 ? 'yellow' : 'red');
+                            $menuItem          = $item->menuItem;
+                            $stock             = $menuItem->stock ?? 0;
+                            $stockColor        = $stock > 5 ? 'green' : ($stock > 0 ? 'yellow' : 'red');
+                            $discountedPrice   = $cartPromo ? round($item->price * (1 - $cartPromoPercent / 100), 2) : null;
+                            $effectivePrice    = $discountedPrice ?? $item->price;
                         @endphp
                         <div class="cart-item border-b border-gray-200 last:border-b-0 hover:bg-white/50 transition-colors"
                              data-id="{{ $item->id }}"
-                             data-price="{{ $item->price }}"
+                             data-menu-item-id="{{ $menuItem->id }}"
+                             data-price="{{ $effectivePrice }}"
                              data-stock="{{ $stock }}">
                             
                             <div class="grid grid-cols-12 gap-4 items-center px-6 py-4">
@@ -228,9 +271,6 @@
                                             <h2 class="font-bold text-lg text-gray-800">
                                                 {{ $menuItem->name }}
                                             </h2>
-                                            @if($item->special_instructions)
-                                                <p class="text-xs text-gray-500 italic">Note: {{ $item->special_instructions }}</p>
-                                            @endif
                                             <p class="text-xs text-gray-500 mt-1">
                                                 Stock available: <span class="font-semibold">{{ $stock }}</span>
                                             </p>
@@ -240,9 +280,14 @@
 
                                 <!-- Price -->
                                 <div class="col-span-2 text-center">
-                                    <span class="font-medium text-gray-700">
-                                        ₱{{ number_format($item->price, 2) }}
+                                    <span class="font-medium {{ $discountedPrice ? 'text-[#ea5a47]' : 'text-gray-700' }}">
+                                        ₱{{ number_format($effectivePrice, 2) }}
                                     </span>
+                                    @if($discountedPrice)
+                                        <div class="text-xs text-gray-400 line-through leading-none mt-0.5">
+                                            ₱{{ number_format($item->price, 2) }}
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Quantity Controls -->
@@ -271,8 +316,13 @@
                                 <!-- Subtotal -->
                                 <div class="col-span-2 text-center">
                                     <span class="font-bold text-lg text-[#ea5a47] subtotal">
-                                        ₱{{ number_format($item->price * $item->quantity, 2) }}
+                                        ₱{{ number_format($effectivePrice * $item->quantity, 2) }}
                                     </span>
+                                    @if($discountedPrice)
+                                        <div class="text-xs text-gray-400 line-through leading-none mt-0.5">
+                                            ₱{{ number_format($item->price * $item->quantity, 2) }}
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Action column -->
@@ -304,10 +354,11 @@
                         </div>
                     @endforeach
                 </div>
+                </div>{{-- /overflow-x-auto --}}
 
                 <!-- Bottom Section with Selection Info -->
                 <div class="mt-8 bg-white rounded-2xl shadow-lg p-6 border-2 border-[#fdf7f2]">
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 sm:gap-6">
                         <div class="flex items-center gap-4">
                             <div class="bg-[#ea5a47] bg-opacity-10 p-3 rounded-full">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#ea5a47]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -328,7 +379,7 @@
                         <button type="button"
                                 onclick="prepareCheckout()"
                                 id="checkout-btn"
-                                class="group bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-10 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="group w-full sm:w-auto bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-10 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
                             <span>Proceed to Checkout</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -349,6 +400,29 @@
     </div>
 </form>
 
+<!-- Sticky Mobile Checkout Bar (visible only on small screens when items are selected) -->
+@if(!$cartItems->isEmpty())
+<div id="sticky-checkout-bar"
+     class="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white border-t-2 border-gray-100 px-4 py-3 shadow-2xl hidden">
+    <div class="flex items-center justify-between gap-3">
+        <div>
+            <p class="text-xs text-gray-500"><span id="sticky-count">0</span> item(s) selected</p>
+            <p class="text-lg font-black text-[#ea5a47]" id="sticky-total">₱0.00</p>
+        </div>
+        <button type="button"
+                onclick="prepareCheckout()"
+                id="sticky-checkout-btn"
+                class="bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+            Checkout
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+        </button>
+    </div>
+</div>
+@endif
+
 <!-- DELETE FORMS -->
 @foreach($cartItems as $item)
     <form id="delete-form-{{ $item->id }}" 
@@ -363,6 +437,7 @@
 <script>
 let currentItemId = null;
 let currentItemElement = null;
+let currentMenuItemId = null;
 let bulkDeleteMode = false;
 let selectedItemsToDelete = [];
 
@@ -393,13 +468,80 @@ function showToast(message, isError = false) {
     }, 3000);
 }
 
+function showUndoToast(menuItemId) {
+    // Remove any existing undo toast
+    const existing = document.getElementById('undo-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'undo-toast';
+    toast.className = 'fixed bottom-4 right-4 z-50 bg-gray-800 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in-right';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    let countdown = 5;
+    toast.innerHTML = `
+        <span class="text-sm">Item removed.</span>
+        <button id="undo-btn"
+                class="text-[#ea5a47] font-bold text-sm hover:text-orange-300 underline transition-colors"
+                aria-label="Undo item removal">
+            Undo (${countdown}s)
+        </button>
+        <button onclick="document.getElementById('undo-toast')?.remove()" aria-label="Dismiss" class="text-gray-400 hover:text-white ml-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Countdown timer
+    const interval = setInterval(() => {
+        countdown--;
+        const btn = document.getElementById('undo-btn');
+        if (btn) btn.textContent = `Undo (${countdown}s)`;
+        if (countdown <= 0) {
+            clearInterval(interval);
+            document.getElementById('undo-toast')?.remove();
+        }
+    }, 1000);
+
+    // Undo: re-add item to cart
+    document.getElementById('undo-btn')?.addEventListener('click', function () {
+        clearInterval(interval);
+        document.getElementById('undo-toast')?.remove();
+
+        fetch(`/client/cart/add/${menuItemId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ quantity: 1 })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success !== false) {
+                showToast('Item added back to cart.');
+                if (d.count !== undefined) updateCartBadge(d.count);
+                // Reload to show the item in the cart list
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showToast(d.message || 'Could not re-add item.', true);
+            }
+        })
+        .catch(() => showToast('Could not re-add item. Please browse the menu.', true));
+    });
+}
+
 function showSingleDeleteModal(itemId, element) {
     bulkDeleteMode = false;
     currentItemId = itemId;
     currentItemElement = element;
-    
+    currentMenuItemId = element.getAttribute('data-menu-item-id') || null;
+
     // Get item details
-    const itemTitle = element.querySelector('.font-bold.text-lg.text-gray-800')?.textContent || 'Item';
+    const itemTitle = element.querySelector('.font-bold.text-lg.text-gray-800')?.textContent?.trim() || 'Item';
     const itemPrice = element.querySelector('.font-medium.text-gray-700')?.textContent || '₱0.00';
     const itemImage = element.querySelector('img')?.src || '';
     
@@ -440,7 +582,7 @@ function showBulkDeleteModal() {
     document.getElementById('modal-message').textContent = `Are you sure you want to remove ${selectedItemsToDelete.length} item(s) from your cart?`;
     document.getElementById('modal-item-preview').classList.add('hidden');
     document.getElementById('modal-bulk-message').classList.remove('hidden');
-    document.getElementById('bulk-count').textContent = `You are about to remove ${selectedItemsToDelete.length} item(s) from your cart. This action cannot be undone.`;
+    document.getElementById('bulk-count').textContent = `You are about to remove ${selectedItemsToDelete.length} item(s) from your cart. You can re-add them from the menu.`;
     
     const modal = document.getElementById('confirm-modal');
     const modalCard = document.getElementById('modal-card');
@@ -498,12 +640,19 @@ function confirmSingleRemove() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            const removedMenuItemId = currentMenuItemId;
             setTimeout(() => {
                 currentItemElement.remove();
                 updateCartBadge(data.count);
                 updateSelection();
-                showToast('Item removed from cart');
-                
+
+                // Show undo toast with re-add link
+                if (removedMenuItemId) {
+                    showUndoToast(removedMenuItemId);
+                } else {
+                    showToast('Item removed from cart');
+                }
+
                 if (document.querySelectorAll('.cart-item').length === 0) {
                     location.reload();
                 }
@@ -516,7 +665,7 @@ function confirmSingleRemove() {
     })
     .catch(error => {
         console.error('Error:', error);
-        showToast('Error removing item', true);
+        showToast(navigator.onLine ? 'Could not remove item. Please try again.' : 'No connection — check your network.', true);
         currentItemElement.style.opacity = '1';
         currentItemElement.style.transform = 'translateX(0)';
     })
@@ -656,6 +805,23 @@ function updateSelection() {
     }
     
     calculateGrandTotal();
+
+    // Sync sticky mobile checkout bar
+    const stickyBar = document.getElementById('sticky-checkout-bar');
+    const stickyBtn = document.getElementById('sticky-checkout-btn');
+    const stickyCount = document.getElementById('sticky-count');
+    const stickyTotal = document.getElementById('sticky-total');
+    if (stickyBar) {
+        if (selectedCount > 0) {
+            stickyBar.classList.remove('hidden');
+            stickyBtn.disabled = false;
+            stickyCount.textContent = selectedCount;
+        } else {
+            stickyBar.classList.add('hidden');
+            stickyBtn.disabled = true;
+        }
+    }
+    if (stickyTotal) stickyTotal.textContent = document.getElementById('grand-total')?.textContent || '₱0.00';
 }
 
 function changeQuantity(itemId, change) {
@@ -759,6 +925,9 @@ function calculateGrandTotal() {
     if (grandTotalSpan) {
         grandTotalSpan.textContent = '₱' + total.toFixed(2);
     }
+    // Sync sticky bar total
+    const stickyTotal = document.getElementById('sticky-total');
+    if (stickyTotal) stickyTotal.textContent = '₱' + total.toFixed(2);
 }
 
 function prepareCheckout() {
@@ -781,6 +950,7 @@ function prepareCheckout() {
 
     const checkoutForm = document.getElementById('checkout-form');
     if (checkoutForm) {
+        if (typeof showProgress === 'function') showProgress();
         checkoutForm.submit();
     }
 }

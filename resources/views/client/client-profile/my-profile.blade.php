@@ -3,7 +3,7 @@
 @section('title', 'My Profile')
 
 @section('content')
-<div class="max-w-4xl mx-auto mt-32 px-4 mb-20">
+<div class="max-w-4xl mx-auto mt-24 md:mt-32 px-4 mb-20">
     
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
@@ -12,7 +12,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
         </div>
-        <h1 class="text-4xl font-black text-gray-800">My <span class="text-[#ea5a47]">Profile</span></h1>
+        <h1 class="text-2xl sm:text-4xl font-black text-gray-800">My <span class="text-[#ea5a47]">Profile</span></h1>
     </div>
 
     <div class="grid lg:grid-cols-1 gap-8 max-w-2xl mx-auto">

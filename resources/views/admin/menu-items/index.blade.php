@@ -3,7 +3,7 @@
 @section('title', 'Menu Items')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:py-25">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6">
     <!-- Decorative Background Elements (keep existing) -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-20 -right-20 w-96 h-96 bg-[#ea5a47] opacity-5 rounded-full blur-3xl"></div>
@@ -16,10 +16,6 @@
         <div class="absolute top-60 left-60 text-5xl opacity-10">🍜</div>
         <div class="absolute bottom-60 right-60 text-5xl opacity-10">🍛</div>
         <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, #ea5a47 1px, transparent 0); background-size: 40px 40px; opacity: 0.02;"></div>
-        @for($i = 0; $i < 10; $i++)
-            <div class="absolute w-2 h-2 bg-[#ea5a47] rounded-full opacity-10 animate-float" 
-                 style="top: {{ rand(0, 100) }}%; left: {{ rand(0, 100) }}%; animation-delay: {{ rand(0, 5) }}s;"></div>
-        @endfor
     </div>
 
     <div class="relative z-10 max-w-7xl mx-auto">
@@ -34,7 +30,7 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800">
+                <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                     Menu <span class="text-[#ea5a47]">Items</span>
                 </h1>
             </div>
@@ -90,21 +86,107 @@
             </form>
         </div>
 
+        <!-- Archive Toggle -->
+        @if($archivedItems->count() > 0)
+        <div class="mb-4 flex items-center gap-3">
+            <button onclick="toggleArchive()" id="archive-toggle-btn"
+                    class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.293 13h11.414L19 8M10 12h4" />
+                </svg>
+                Archive
+                <span class="bg-gray-400 text-white text-xs px-2 py-0.5 rounded-full">{{ $archivedItems->count() }}</span>
+            </button>
+        </div>
+
+        <!-- Archive Section -->
+        <div id="archive-section" class="hidden mb-6">
+            <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-3xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.293 13h11.414L19 8M10 12h4" />
+                    </svg>
+                    <h3 class="font-bold text-gray-500 text-sm uppercase tracking-wide">Archived Menu Items</h3>
+                </div>
+                <div class="overflow-auto max-h-72">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs uppercase bg-gray-100 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3">Name</th>
+                            <th class="px-6 py-3">Category</th>
+                            <th class="px-6 py-3">Price</th>
+                            <th class="px-6 py-3">Archived On</th>
+                            <th class="px-6 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @foreach($archivedItems as $archived)
+                        <tr class="hover:bg-gray-100/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-gray-500">{{ $archived->name }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-400">
+                                {{ $archived->category->name ?? '—' }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-400">
+                                ₱{{ number_format($archived->price, 2) }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-400 text-xs">
+                                {{ $archived->deleted_at->format('M d, Y h:i A') }}
+                                <div>{{ $archived->deleted_at->diffForHumans() }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    {{-- Restore --}}
+                                    <form action="{{ route('admin.menu-items.restore', $archived->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                                class="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                                title="Restore">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                    {{-- Permanent Delete --}}
+                                    <form action="{{ route('admin.menu-items.force-delete', $archived->id) }}" method="POST"
+                                          onsubmit="return confirm('Permanently delete \"{{ addslashes($archived->name) }}\"? This cannot be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                                title="Permanently Delete">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                </div>{{-- end overflow-x-auto --}}
+            </div>
+        </div>
+        @endif
+
         <!-- Menu Items Table Card -->
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#ea5a47] to-[#c53030] opacity-5 rounded-bl-3xl"></div>
             
             <div class="relative z-10 overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-700">
+                <table class="w-full min-w-[800px] text-sm text-left text-gray-700">
                     <thead class="text-xs uppercase bg-gray-50/80 border-b-2 border-gray-200">
                         <tr>
                             <th scope="col" class="px-6 py-4">Image</th>
                             <th scope="col" class="px-6 py-4">Name</th>
                             <th scope="col" class="px-6 py-4">Category</th>
                             <th scope="col" class="px-6 py-4">Price</th>
-                            <th scope="col" class="px-6 py-4">Stock</th>
-                            <th scope="col" class="px-6 py-4">Dietary</th>
-                            <th scope="col" class="px-6 py-4">Allergens</th>
+                            <th scope="col" class="px-6 py-4 text-center">Stock</th>
+                            <th scope="col" class="px-4 py-4">Dietary</th>
+                            <th scope="col" class="px-4 py-4">Allergens</th>
                             <th scope="col" class="px-6 py-4">Actions</th>
                         </tr>
                     </thead>
@@ -166,37 +248,53 @@
                                     {{ $status['label'] }} ({{ $item->stock }})
                                 </span>
                              </td>
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4">
                                 @if($item->dietary_badges && count($item->dietary_badges) > 0)
-                                    <div class="flex flex-wrap gap-1">
+                                    <div class="flex flex-wrap gap-1 max-w-[120px]">
                                         @foreach($item->dietary_badges as $badge)
-                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {{ $badge['color'] }}" title="{{ $badge['name'] }}">
-                                                <span>{{ $badge['icon'] }}</span>
-                                                <span class="hidden lg:inline">{{ $badge['name'] }}</span>
+                                            <span class="inline-flex items-center px-1.5 py-1 text-sm rounded-full {{ $badge['color'] }}" title="{{ $badge['name'] }}">
+                                                {{ $badge['icon'] }}
                                             </span>
                                         @endforeach
                                     </div>
                                 @else
-                                    <span class="text-xs text-gray-400 italic">None</span>
+                                    <span class="text-xs text-gray-400">—</span>
                                 @endif
-                             </td>
-                            <td class="px-6 py-4">
+                            </td>
+                            <td class="px-4 py-4">
                                 @if($item->allergen_badges && count($item->allergen_badges) > 0)
-                                    <div class="flex flex-wrap gap-1">
+                                    <div class="flex flex-wrap gap-1 max-w-[120px]">
                                         @foreach($item->allergen_badges as $badge)
-                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {{ $badge['color'] }}" title="{{ $badge['name'] }}">
-                                                <span>{{ $badge['icon'] }}</span>
-                                                <span class="hidden lg:inline">{{ $badge['name'] }}</span>
+                                            <span class="inline-flex items-center px-1.5 py-1 text-sm rounded-full {{ $badge['color'] }}" title="{{ $badge['name'] }}">
+                                                {{ $badge['icon'] }}
                                             </span>
                                         @endforeach
                                     </div>
                                 @else
-                                    <span class="text-xs text-gray-400 italic">None</span>
+                                    <span class="text-xs text-gray-400">—</span>
                                 @endif
-                             </td>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
-                                    <a href="{{ route('admin.menu-items.edit', $item->id) }}" 
+                                    {{-- Quick stock toggle --}}
+                                    <form action="{{ route('admin.menu-items.toggle-stock', $item->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                                title="{{ $item->stock > 0 ? 'Mark Out of Stock' : 'Mark In Stock (restores to 50)' }}"
+                                                class="p-2 rounded-lg transition-colors duration-200 {{ $item->stock > 0 ? 'bg-green-100 text-green-600 hover:bg-red-100 hover:text-red-600' : 'bg-red-100 text-red-600 hover:bg-green-100 hover:text-green-600' }}">
+                                            @if($item->stock > 0)
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            @else
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            @endif
+                                        </button>
+                                    </form>
+
+                                    <a href="{{ route('admin.menu-items.edit', $item->id) }}"
                                        class="edit-item p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors duration-200"
                                        title="Edit">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,11 +377,10 @@
                     </div>
                     
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-xl font-black text-gray-900">Delete <span class="text-[#ea5a47]">Menu Item</span></h3>
+                        <h3 class="text-xl font-black text-gray-900">Archive <span class="text-[#ea5a47]">Menu Item</span></h3>
                         <div class="mt-2">
                             <p class="text-sm text-gray-600 leading-relaxed">
-                                Are you sure you want to delete <span class="font-semibold text-[#ea5a47]" id="itemName"></span>? 
-                                This action cannot be undone and all associated data will be permanently removed.
+                                Archive <span class="font-semibold text-[#ea5a47]" id="itemName"></span>? It will be hidden from the menu but can be restored anytime from the Archive.
                             </p>
                         </div>    
                     </div>
@@ -296,7 +393,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    <span>Yes, Delete Item</span>
+                    <span>Yes, Archive Item</span>
                 </button>
                 
                 <button type="button" id="cancelDelete" 
@@ -361,22 +458,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Confirm delete
+    // Confirm archive
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function(e) {
             e.preventDefault();
             if (currentDeleteForm) {
-                // Hide the modal first
-                modal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-                
-                // Show loader
+                // Loading state on button
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = `
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span>Processing...</span>
+                `;
+                confirmBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                isSubmitting = true;
+
+                // Also disable cancel button so modal can't be dismissed mid-submit
+                const cancelBtnEl = document.getElementById('cancelDelete');
+                if (cancelBtnEl) cancelBtnEl.disabled = true;
+
                 if (window.showLoader) window.showLoader();
-                
-                // Small delay to ensure modal is hidden
+
                 setTimeout(() => {
                     currentDeleteForm.submit();
-                }, 100);
+                }, 300);
             } else {
                 alert('Error: No form to submit');
                 hideModal();
@@ -384,8 +491,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    let isSubmitting = false;
+
     // Hide modal function
     function hideModal() {
+        if (isSubmitting) return;
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
         currentDeleteForm = null;
@@ -550,15 +660,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Auto-hide success alerts after 3 seconds
-    setTimeout(function() {
-        document.querySelectorAll('.bg-green-50, .bg-red-50').forEach(alert => {
-            alert.style.transition = 'opacity 0.5s';
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
-        });
-    }, 3000);
 });
+
+function toggleArchive() {
+    const section = document.getElementById('archive-section');
+    const btn     = document.getElementById('archive-toggle-btn');
+    const hidden  = section.classList.toggle('hidden');
+    btn.classList.toggle('bg-gray-200', !hidden);
+    btn.classList.toggle('ring-2',      !hidden);
+    btn.classList.toggle('ring-gray-400', !hidden);
+}
+
 </script>
 
 <style>

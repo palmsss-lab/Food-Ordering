@@ -2,6 +2,12 @@
 
 @vite('resources/css/app.css')
 
+@php
+    $activePromo      = \App\Models\Promotion::todayPromo();
+    $discountedPrice  = $activePromo ? round($item->price * (1 - $activePromo->discount_percentage / 100), 2) : null;
+    $displayPrice     = $discountedPrice ?? $item->price;
+@endphp
+
 <!-- Quantity Selector Modal -->
 <div id="quantity-modal-{{ $item->id }}" 
      class="fixed inset-0 z-50 flex items-center justify-center hidden">
@@ -42,15 +48,17 @@
                     @endphp
                     
                     @if($isExternalUrl)
-                        <img src="{{ $item->image_path }}" 
+                        <img src="{{ $item->image_path }}"
                              class="w-20 h-20 object-cover rounded-xl border-2 border-white shadow-md"
                              alt="{{ $item->name }}"
-                             onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=Error';">
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%23f3f4f6%22/%3E%3Cpath d=%22M20 56l13-13a4 4 0 016 0L52 56m-4-4l5-5a4 4 0 016 0L64 52M28 32h.02M20 68h40a4 4 0 004-4V20a4 4 0 00-4-4H20a4 4 0 00-4 4v44a4 4 0 004 4z%22 fill=%22none%22 stroke=%22%239ca3af%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E';">
                     @else
-                        <img src="{{ Storage::url($item->image_path) }}" 
+                        <img src="{{ Storage::url($item->image_path) }}"
                              class="w-20 h-20 object-cover rounded-xl border-2 border-white shadow-md"
                              alt="{{ $item->name }}"
-                             onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=Error';">
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 fill=%22%23f3f4f6%22/%3E%3Cpath d=%22M20 56l13-13a4 4 0 016 0L52 56m-4-4l5-5a4 4 0 016 0L64 52M28 32h.02M20 68h40a4 4 0 004-4V20a4 4 0 00-4-4H20a4 4 0 00-4 4v44a4 4 0 004 4z%22 fill=%22none%22 stroke=%22%239ca3af%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E';">
                     @endif
                 @else
                     <div class="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center border-2 border-gray-200">
@@ -62,7 +70,12 @@
                 
                 <div class="flex-1">
                     <h3 class="font-bold text-xl text-gray-800">{{ $item->name }}</h3>
-                    <p class="text-[#ea5a47] font-bold text-lg">₱{{ number_format($item->price, 2) }}</p>
+                    <div class="flex items-baseline gap-2 flex-wrap">
+                        <p class="text-[#ea5a47] font-bold text-lg">₱{{ number_format($displayPrice, 2) }}</p>
+                        @if($discountedPrice)
+                            <p class="text-gray-400 text-sm line-through">₱{{ number_format($item->price, 2) }}</p>
+                        @endif
+                    </div>
                     <p class="text-sm text-gray-500 mt-1">Available stock: <span id="stock-display-{{ $item->id }}">{{ $item->stock }}</span></p>
                 </div>
             </div>
@@ -99,8 +112,10 @@
                 <div class="mt-4 text-center">
                     <span class="text-sm text-gray-500">Total:</span>
                     <span class="ml-2 text-xl font-bold text-[#ea5a47]" id="modal-total-{{ $item->id }}">
-                        ₱{{ number_format($item->price, 2) }}
+                        ₱{{ number_format($displayPrice, 2) }}
                     </span>
+                    {{-- hidden unit price used by JS to calculate total --}}
+                    <span class="hidden" id="modal-unit-price-{{ $item->id }}">{{ $displayPrice }}</span>
                 </div>
                 
                 <!-- Error message for invalid quantity -->
@@ -153,17 +168,17 @@
                     @endphp
                     
                     @if($isExternalUrl)
-                        <img class="w-48 h-48 object-cover rounded-2xl mx-auto shadow-xl border-4 border-white 
-                            {{ $item->stock < 1 ? 'opacity-50 grayscale' : '' }}" 
-                             src="{{ $item->image_path }}" 
+                        <img class="w-48 h-48 object-cover rounded-2xl mx-auto shadow-xl border-4 border-white
+                            {{ $item->stock < 1 ? 'opacity-50 grayscale' : '' }}"
+                             src="{{ $item->image_path }}"
                              alt="{{ $item->name }}"
-                             onerror="this.onerror=null; this.src='https://via.placeholder.com/192?text=No+Image';">
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22%3E%3Crect width=%22192%22 height=%22192%22 fill=%22%23f3f4f6%22/%3E%3Cpath d=%22M48 134l32-32a10 10 0 0114 0L128 134m-10-10l12-12a10 10 0 0114 0L160 128M68 76h.02M48 164h96a10 10 0 0010-10V48a10 10 0 00-10-10H48a10 10 0 00-10 10v106a10 10 0 0010 10z%22 fill=%22none%22 stroke=%22%239ca3af%22 stroke-width=%228%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E';">
                     @else
-                        <img class="w-48 h-48 object-cover rounded-2xl mx-auto shadow-xl border-4 border-white 
-                            {{ $item->stock < 1 ? 'opacity-50 grayscale' : '' }}" 
-                             src="{{ Storage::url($item->image_path) }}" 
+                        <img class="w-48 h-48 object-cover rounded-2xl mx-auto shadow-xl border-4 border-white
+                            {{ $item->stock < 1 ? 'opacity-50 grayscale' : '' }}"
+                             src="{{ Storage::url($item->image_path) }}"
                              alt="{{ $item->name }}"
-                             onerror="this.onerror=null; this.src='https://via.placeholder.com/192?text=No+Image';">
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22%3E%3Crect width=%22192%22 height=%22192%22 fill=%22%23f3f4f6%22/%3E%3Cpath d=%22M48 134l32-32a10 10 0 0114 0L128 134m-10-10l12-12a10 10 0 0114 0L160 128M68 76h.02M48 164h96a10 10 0 0010-10V48a10 10 0 00-10-10H48a10 10 0 00-10 10v106a10 10 0 0010 10z%22 fill=%22none%22 stroke=%22%239ca3af%22 stroke-width=%228%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E';">
                     @endif
                 @else
                     <div class="w-48 h-48 bg-gray-100 rounded-2xl mx-auto shadow-xl border-4 border-white flex items-center justify-center">
@@ -213,10 +228,15 @@
                     {{ $item->stock < 1 ? 'line-through decoration-red-500 decoration-2' : '' }}">
                     {{ $item->name }}
                 </h3>
-                <span class="text-2xl font-black {{ $item->stock > 0 ? 'text-[#ea5a47]' : 'text-gray-400' }} ml-4 
-                    {{ $item->stock < 1 ? 'line-through decoration-red-500 decoration-2' : '' }}">
-                    ₱{{ number_format($item->price, 2) }}
-                </span>
+                <div class="ml-4 text-right flex-shrink-0">
+                    <span class="text-2xl font-black {{ $item->stock > 0 ? 'text-[#ea5a47]' : 'text-gray-400' }}
+                        {{ $item->stock < 1 ? 'line-through decoration-red-500 decoration-2' : '' }}">
+                        ₱{{ number_format($displayPrice, 2) }}
+                    </span>
+                    @if($discountedPrice && $item->stock > 0)
+                        <div class="text-xs text-gray-400 line-through leading-none mt-0.5">₱{{ number_format($item->price, 2) }}</div>
+                    @endif
+                </div>
             </div>
             
             <!-- Hover Hint - Simple indicator that more info is available on hover -->
@@ -263,8 +283,11 @@
 
                 <!-- Price in Button -->
                 @if($item->stock > 0)
-                    <span class="ml-auto bg-white/20 px-2 py-1 rounded-lg text-sm">
-                        ₱{{ number_format($item->price, 2) }}
+                    <span class="ml-auto bg-white/20 px-2 py-1 rounded-lg text-sm flex items-center gap-1.5">
+                        ₱{{ number_format($displayPrice, 2) }}
+                        @if($discountedPrice)
+                            <span class="opacity-60 line-through text-xs">₱{{ number_format($item->price, 2) }}</span>
+                        @endif
                     </span>
                 @endif
             </button>
@@ -399,7 +422,7 @@
 
 <script>
     // ============ QUANTITY MODAL FUNCTIONS ============
-    
+
     function openQuantityModal(itemId) {
         const modal = document.getElementById(`quantity-modal-${itemId}`);
         const modalCard = document.getElementById(`modal-card-${itemId}`);
@@ -523,11 +546,11 @@
     function updateModalTotal(itemId) {
         const quantityInput = document.getElementById(`modal-quantity-${itemId}`);
         const totalSpan = document.getElementById(`modal-total-${itemId}`);
-        
+        const unitPriceEl = document.getElementById(`modal-unit-price-${itemId}`);
+
         if (!quantityInput || !totalSpan) return;
-        
-        const priceText = document.querySelector(`#modal-card-${itemId} .text-\\[\\#ea5a47\\].font-bold.text-lg`)?.textContent || '₱0.00';
-        const price = parseFloat(priceText.replace('₱', '').replace(',', ''));
+
+        const price = unitPriceEl ? parseFloat(unitPriceEl.textContent) : 0;
         const quantity = parseInt(quantityInput.value);
         const total = price * quantity;
         totalSpan.textContent = '₱' + total.toFixed(2);

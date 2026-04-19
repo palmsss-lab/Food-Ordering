@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\MenuItem;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -17,8 +18,10 @@ class CategoryController extends Controller
         $categories = Category::withCount('menuItems')
             ->orderBy('name')
             ->paginate(15);
-        
-        return view('admin.categories.index', compact('categories'));
+
+        $archivedCategories = Category::onlyTrashed()->withCount('menuItems')->orderBy('deleted_at', 'desc')->get();
+
+        return view('admin.categories.index', compact('categories', 'archivedCategories'));
     }
 
     /**
@@ -76,15 +79,46 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        // Check if category has menu items
-        if ($category->menuItems()->count() > 0) {
-            return redirect()->route('admin.categories.index')
-                ->with('error', 'Cannot delete category with existing menu items.');
-        }
-
+        // Cascade: archive all active menu items in this category
+        $itemCount = $category->menuItems()->count();
+        $category->menuItems()->each(fn($item) => $item->delete());
         $category->delete();
 
+        $msg = "\"{$category->name}\" has been archived.";
+        if ($itemCount > 0) {
+            $msg .= " {$itemCount} menu item(s) were also archived.";
+        }
+
+        return redirect()->route('admin.categories.index')->with('success', $msg);
+    }
+
+    public function restore($id)
+    {
+        $category = Category::onlyTrashed()->findOrFail($id);
+        $category->restore();
+
+        // Cascade: restore menu items that belong to this category and are archived
+        $itemCount = MenuItem::onlyTrashed()->where('categories_id', $category->id)->count();
+        MenuItem::onlyTrashed()->where('categories_id', $category->id)->each(fn($item) => $item->restore());
+
+        $msg = "\"{$category->name}\" has been restored.";
+        if ($itemCount > 0) {
+            $msg .= " {$itemCount} menu item(s) were also restored.";
+        }
+
+        return redirect()->route('admin.categories.index')->with('success', $msg);
+    }
+
+    public function forceDelete($id)
+    {
+        $category = Category::onlyTrashed()->findOrFail($id);
+        $name = $category->name;
+
+        // Also force-delete archived menu items under this category
+        MenuItem::onlyTrashed()->where('categories_id', $category->id)->each(fn($item) => $item->forceDelete());
+        $category->forceDelete();
+
         return redirect()->route('admin.categories.index')
-            ->with('success', 'Category deleted successfully.');
+            ->with('success', "\"{$name}\" has been permanently deleted along with its archived menu items.");
     }
 }

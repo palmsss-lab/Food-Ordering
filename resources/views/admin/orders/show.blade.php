@@ -16,7 +16,7 @@
                     </svg>
                 </a>
                 <div>
-                    <h1 class="text-3xl font-black text-gray-800">
+                    <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                         Order <span class="text-[#ea5a47]">{{ $order->order_number }}</span>
                     </h1>
                     <p class="text-gray-500">Placed {{ $order->ordered_at ? $order->ordered_at->diffForHumans() : $order->created_at->diffForHumans() }}</p>
@@ -24,7 +24,7 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
                 <!-- Confirm Order Button (for pending unconfirmed orders) -->
                 @if($order->order_status === 'pending' && !$order->admin_confirmed_at)
                     <button onclick="openConfirmModal()" 
@@ -65,7 +65,7 @@
                 @endif
 
                 <!-- Mark as Paid (for cash orders) - Admin decision button -->
-                @if($order->payment_method === 'cash' && $order->payment_status === 'cash on pickup' && in_array($order->order_status, ['ready', 'completed']))
+                @if($order->payment_method === 'cash' && $order->payment_status === 'cash on pickup' && $order->order_status === 'completed')
                     <form action="{{ route('admin.orders.mark-as-paid', $order) }}" method="POST" class="inline" id="paid-form">
                         @csrf
                         <button type="submit" 
@@ -231,9 +231,6 @@
                                 <div class="flex-1">
                                     <p class="font-medium text-gray-800">{{ $item->item_name }}</p>
                                     <p class="text-sm text-gray-500">Qty: {{ $item->quantity }} x ₱{{ number_format($item->price, 2) }}</p>
-                                    @if($item->special_instructions)
-                                    <p class="text-xs text-gray-400 italic mt-1">Note: {{ $item->special_instructions }}</p>
-                                    @endif
                                 </div>
                                 <p class="font-bold text-[#ea5a47]">₱{{ number_format($item->subtotal, 2) }}</p>
                             </div>
@@ -251,9 +248,15 @@
                                     <span class="text-gray-600">Tax (12%):</span>
                                     <span class="font-medium">₱{{ number_format($order->tax, 2) }}</span>
                                 </div>
-                                @if($order->discount > 0)
+                                @if(($order->promo_discount ?? 0) > 0)
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Discount:</span>
+                                    <span class="text-gray-600">{{ $order->promo_label ?: 'Promotion' }}:</span>
+                                    <span class="font-medium text-green-600">-₱{{ number_format($order->promo_discount, 2) }}</span>
+                                </div>
+                                @endif
+                                @if(($order->discount ?? 0) > 0)
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">{{ $order->discount_label ?: 'Discount' }}:</span>
                                     <span class="font-medium text-green-600">-₱{{ number_format($order->discount, 2) }}</span>
                                 </div>
                                 @endif

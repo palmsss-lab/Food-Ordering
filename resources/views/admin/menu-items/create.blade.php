@@ -16,15 +16,11 @@
         <div class="absolute top-60 left-60 text-5xl opacity-10">🍜</div>
         <div class="absolute bottom-60 right-60 text-5xl opacity-10">🍛</div>
         <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, #ea5a47 1px, transparent 0); background-size: 40px 40px; opacity: 0.02;"></div>
-        @for($i = 0; $i < 10; $i++)
-            <div class="absolute w-2 h-2 bg-[#ea5a47] rounded-full opacity-10 animate-float" 
-                style="top: {{ rand(0, 100) }}%; left: {{ rand(0, 100) }}%; animation-delay: {{ rand(0, 5) }}s;"></div>
-        @endfor
     </div>
 
     <div class="relative z-10 max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <div class="absolute inset-0 bg-[#ea5a47] rounded-lg blur-md opacity-30"></div>
@@ -34,7 +30,7 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800">
+                <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                     Add New <span class="text-[#ea5a47]">Menu Item</span>
                 </h1>
             </div>
@@ -54,7 +50,7 @@
             <div class="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#ea5a47] to-[#c53030] opacity-5 rounded-tl-3xl"></div>
             
             <!-- SCROLLABLE CONTAINER -->
-            <div class="relative z-10 max-h-[calc(100vh-180px)] overflow-y-auto px-8 py-6">
+            <div class="relative z-10 max-h-[calc(100vh-180px)] overflow-y-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6">
                 <form id="create-menu-form" action="{{ route('admin.menu-items.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
 
@@ -323,6 +319,7 @@
                         <div class="flex gap-4">
                             <button type="submit"
                                     id="submit-btn"
+                                    data-loading-text="Adding Menu Item..."
                                     class="flex items-center justify-center gap-2 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-3 px-8 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-[#c53030] hover:to-[#ea5a47]">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -379,42 +376,44 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle form submission
     const createForm = document.getElementById('create-menu-form');
-    
+    const submitBtn  = document.getElementById('submit-btn');
+
+    const _spinner = `<svg class="inline-block w-4 h-4 animate-spin mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>`;
+
     if (createForm) {
         createForm.addEventListener('submit', function(e) {
-            // Prevent double submission
             if (isSubmitting) {
                 e.preventDefault();
                 return;
             }
-            
             isSubmitting = true;
-            
-            // Show loader
-            if (window.showLoader) {
-                window.showLoader();
-            }
-            
-            // Disable submit button to prevent multiple clicks
-            const submitBtn = document.getElementById('submit-btn');
-            if (submitBtn) {
+
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.style.minWidth = submitBtn.offsetWidth + 'px';
                 submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.7';
-                submitBtn.style.cursor = 'not-allowed';
+                submitBtn.setAttribute('data-original-html', submitBtn.innerHTML);
+                submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                const loadingText = submitBtn.getAttribute('data-loading-text') || 'Processing...';
+                submitBtn.innerHTML = `${_spinner}<span>${loadingText}</span>`;
             }
-            
-            // Form will submit naturally, loader stays visible until page loads
         });
     }
-    
-    // Reset submitting flag if page is cached or errors occur
-    window.addEventListener('pageshow', function() {
+
+    // Reset button if page is restored from cache or errors redirect back
+    window.addEventListener('pageshow', function(event) {
         isSubmitting = false;
-        const submitBtn = document.getElementById('submit-btn');
         if (submitBtn) {
+            const originalHtml = submitBtn.getAttribute('data-original-html');
             submitBtn.disabled = false;
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
+            submitBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+            submitBtn.style.minWidth = '';
+            if (originalHtml) {
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.removeAttribute('data-original-html');
+            }
         }
     });
 });
@@ -477,13 +476,6 @@ function clearImage() {
 </script>
 
 <style>
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
-    }
-    .animate-float {
-        animation: float 6s ease-in-out infinite;
-    }
     @keyframes slideDown {
         from {
             opacity: 0;

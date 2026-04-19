@@ -19,7 +19,7 @@ class User extends Authenticatable // Make sure it extends Authenticatable
         'password',
         'phone',
         'address',
-        'role'
+        'role',
     ];
 
     protected $hidden = [
@@ -60,6 +60,11 @@ class User extends Authenticatable // Make sure it extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function archivedEmail()
+    {
+        return $this->hasOne(ArchivedEmail::class);
     }
 
     /**

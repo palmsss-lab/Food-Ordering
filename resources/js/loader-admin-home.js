@@ -1,286 +1,147 @@
-// ========== GLOBAL LOADER FUNCTIONS ==========
-let isTransitioning = false;
-let loaderTimeout;
-let activeFormSubmissions = 0;
+// ========== PROGRESS BAR ==========
+const _bar = document.getElementById('progress-bar');
+let _barTimer  = null;
+let _barValue  = 0;
+let _barActive = false;
 
-const loader = document.getElementById('loader');
-
-function showLoader() {
-    if (loader && !isTransitioning) {
-        isTransitioning = true;
-        loader.style.display = 'flex';
-        loader.classList.remove('opacity-0');
-        loader.classList.add('opacity-100');
-        document.body.style.overflow = 'hidden';
-        
-        // Clear any existing timeout
-        if (loaderTimeout) clearTimeout(loaderTimeout);
-        
-        // Safety timeout - hide loader after 15 seconds max
-        loaderTimeout = setTimeout(() => {
-            if (loader && loader.style.display !== 'none') {
-                hideLoader();
-            }
-        }, 15000);
+function showProgress() {
+    if (_barActive) return;
+    _barActive = true;
+    _barValue  = 0;
+    if (_bar) {
+        _bar.style.opacity    = '1';
+        _bar.style.width      = '0%';
+        _bar.style.transition = 'width 0.25s ease, opacity 0.3s ease';
     }
+    _tickProgress();
 }
 
-function hideLoader() {
-    if (loader) {
-        // Don't hide if there are active form submissions
-        if (activeFormSubmissions > 0) {
-            return;
-        }
-        
-        if (loaderTimeout) clearTimeout(loaderTimeout);
-        loader.classList.remove('opacity-100');
-        loader.classList.add('opacity-0');
+function _tickProgress() {
+    const increment = _barValue < 30 ? 8 : _barValue < 60 ? 4 : _barValue < 80 ? 1.5 : 0;
+    _barValue = Math.min(_barValue + increment, 85);
+    if (_bar) _bar.style.width = _barValue + '%';
+    if (_barValue < 85) _barTimer = setTimeout(_tickProgress, 180);
+}
+
+function finishProgress() {
+    if (_barTimer) clearTimeout(_barTimer);
+    if (_bar) {
+        _bar.style.width = '100%';
         setTimeout(() => {
-            loader.style.display = 'none';
-            document.body.style.overflow = '';
-            isTransitioning = false;
-        }, 300);
+            _bar.style.opacity = '0';
+            setTimeout(() => {
+                if (_bar) _bar.style.width = '0%';
+                _barActive = false;
+            }, 320);
+        }, 220);
+    } else {
+        _barActive = false;
     }
 }
+
+// Kept for backward-compat
+function showLoader() { showProgress(); }
+function hideLoader() { finishProgress(); }
 
 // ========== PAGE LOAD HANDLING ==========
-// Show loader initially
-if (loader) {
-    showLoader();
-}
+document.addEventListener('DOMContentLoaded', finishProgress);
 
-// Hide loader when page is fully loaded with a delay to ensure content is rendered
-window.addEventListener('load', function() {
-    // Small delay to ensure all content is rendered
-    setTimeout(() => {
-        activeFormSubmissions = 0;
-        hideLoader();
-    }, 500);
-});
-
-// Also hide when DOM is ready but with proper handling
-document.addEventListener('DOMContentLoaded', function() {
-    // Don't hide immediately if there were form submissions
-    setTimeout(() => {
-        if (activeFormSubmissions === 0) {
-            hideLoader();
-        }
-    }, 300);
-});
-
-// ========== HANDLE ADMIN LINK CLICKS - FIXED ==========
-document.querySelectorAll('a').forEach(link => {
-    // Skip external links and special cases
+// ========== HANDLE ADMIN LINK CLICKS ==========
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('a');
+    if (!link) return;
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
     if (link.hostname !== window.location.hostname) return;
     if (link.hasAttribute('data-no-loader')) return;
-    if (link.getAttribute('href') === '#') return;
-    if (link.getAttribute('href')?.startsWith('#')) return;
-    if (link.getAttribute('href')?.startsWith('javascript:')) return;
+    const href = link.getAttribute('href');
+    if (!href || href === '#' || href.startsWith('#') || href.startsWith('javascript:')) return;
     if (link.target === '_blank') return;
     if (link.hasAttribute('download')) return;
-    
-    // Remove existing listener to prevent duplicates
-    const newLink = link.cloneNode(true);
-    link.parentNode.replaceChild(newLink, link);
-    
-    newLink.addEventListener('click', function(e) {
-        // Don't show loader for modifier keys (Ctrl+Click, etc)
-        if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-        
-        // Check if already transitioning
-        if (isTransitioning) {
-            e.preventDefault();
-            return;
-        }
-        
-        // Show loader
-        showLoader();
-    });
+    showProgress();
 });
 
-// ========== HANDLE ADMIN FORM SUBMISSIONS - FIXED FOR GET FORMS ==========
-document.querySelectorAll('form').forEach(form => {
-    // Skip forms with data-no-loader
+// ========== HANDLE ADMIN FORM SUBMISSIONS ==========
+const _spinner = `<svg class="inline-block w-4 h-4 animate-spin mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+</svg>`;
+
+document.addEventListener('submit', function(e) {
+    const form = e.target;
     if (form.hasAttribute('data-no-loader')) return;
-    
-    // Remove existing listener to prevent duplicates
-    const newForm = form.cloneNode(true);
-    form.parentNode.replaceChild(newForm, form);
-    
-    newForm.addEventListener('submit', function(e) {
-        // Prevent double submission
-        if (isTransitioning) {
-            e.preventDefault();
-            return;
-        }
-        
-        // Increment active form submissions counter
-        activeFormSubmissions++;
-        
-        // Show loader
-        showLoader();
-        
-        // Disable submit button to prevent multiple clicks
-        const submitBtn = this.querySelector('[type="submit"]');
-        if (submitBtn && !submitBtn.disabled) {
-            submitBtn.disabled = true;
-            
-            // Store original text
-            if (!submitBtn.hasAttribute('data-original-text')) {
-                submitBtn.setAttribute('data-original-text', submitBtn.innerHTML);
-            }
-            
-            // Show loading text on button
-            if (!submitBtn.hasAttribute('data-no-loader-text')) {
-                submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Processing...';
-            }
-        }
-        
-        // For GET forms (search/filter), we need to ensure loader stays visible
-        if (this.method === 'get' || this.method === 'GET') {
-            // The form will submit and page will reload
-            // We need to keep loader visible until page fully reloads
-            // The page load event will hide it
-            return true;
-        }
-    });
+
+    // Skip GET forms (search/filter) — just show progress bar, no button change
+    const method = (form.getAttribute('method') || 'get').toLowerCase();
+    const isGetForm = method === 'get';
+
+    showProgress();
+
+    if (isGetForm) return;
+
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (!submitBtn || submitBtn.disabled) return;
+
+    // Lock button width before changing content so it doesn't shrink
+    submitBtn.style.minWidth = submitBtn.offsetWidth + 'px';
+
+    submitBtn.disabled = true;
+    submitBtn.setAttribute('data-original-html', submitBtn.innerHTML);
+    submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+
+    const loadingText = submitBtn.getAttribute('data-loading-text') || 'Processing...';
+    submitBtn.innerHTML = `${_spinner}<span>${loadingText}</span>`;
 });
 
 // ========== HANDLE FILE DOWNLOADS / EXPORTS ==========
-// This handles export buttons and file download links
 document.querySelectorAll('a[download], a[href*="export"], form[action*="export"]').forEach(element => {
-    element.addEventListener('click', function(e) {
-        // Show loader
-        showLoader();
-        
-        // Store reference to timeout and focus handler for cleanup
+    element.addEventListener('click', function() {
+        showProgress();
         let exportTimeout = null;
-        let focusHandler = null;
-        
-        // Set timeout to hide loader after 3 seconds (file should start downloading)
+        let focusHandler  = null;
+
         exportTimeout = setTimeout(function() {
-            // Decrement active form submissions if this was from a form
-            if (activeFormSubmissions > 0) {
-                activeFormSubmissions--;
-            }
-            hideLoader();
-            if (focusHandler) {
-                window.removeEventListener('focus', focusHandler);
-            }
+            finishProgress();
+            if (focusHandler) window.removeEventListener('focus', focusHandler);
         }, 3000);
-        
-        // Also hide loader when window regains focus (download complete)
+
         focusHandler = function() {
-            if (activeFormSubmissions > 0) {
-                activeFormSubmissions--;
-            }
-            hideLoader();
-            if (exportTimeout) {
-                clearTimeout(exportTimeout);
-            }
+            finishProgress();
+            if (exportTimeout) clearTimeout(exportTimeout);
             window.removeEventListener('focus', focusHandler);
         };
         window.addEventListener('focus', focusHandler);
-        
-        // Allow the download to proceed
         return true;
     });
 });
 
-// Also handle any dynamically added export buttons
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length) {
-            document.querySelectorAll('a[download], a[href*="export"], form[action*="export"]').forEach(element => {
-                if (!element.hasAttribute('data-export-handler')) {
-                    element.setAttribute('data-export-handler', 'true');
-                    element.addEventListener('click', function(e) {
-                        showLoader();
-                        
-                        let exportTimeout = null;
-                        let focusHandler = null;
-                        
-                        exportTimeout = setTimeout(function() {
-                            if (activeFormSubmissions > 0) {
-                                activeFormSubmissions--;
-                            }
-                            hideLoader();
-                            if (focusHandler) {
-                                window.removeEventListener('focus', focusHandler);
-                            }
-                        }, 3000);
-                        
-                        focusHandler = function() {
-                            if (activeFormSubmissions > 0) {
-                                activeFormSubmissions--;
-                            }
-                            hideLoader();
-                            if (exportTimeout) {
-                                clearTimeout(exportTimeout);
-                            }
-                            window.removeEventListener('focus', focusHandler);
-                        };
-                        window.addEventListener('focus', focusHandler);
-                        
-                        return true;
-                    });
-                }
-            });
-        }
-    });
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
-
 // ========== HANDLE BACK/FORWARD CACHE ==========
 window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
-        // Reset counters
-        activeFormSubmissions = 0;
-        isTransitioning = false;
-        
-        // Hide loader
-        if (loader && loader.style.display !== 'none') {
-            loader.classList.remove('opacity-100');
-            loader.classList.add('opacity-0');
-            setTimeout(() => {
-                loader.style.display = 'none';
-                document.body.style.overflow = '';
-            }, 300);
-        }
-        
-        // Re-enable any disabled buttons
+        finishProgress();
+
         document.querySelectorAll('button[disabled], input[type="submit"][disabled]').forEach(btn => {
             btn.disabled = false;
-            const originalText = btn.getAttribute('data-original-text');
-            if (originalText) {
-                btn.innerHTML = originalText;
-                btn.removeAttribute('data-original-text');
+            btn.classList.remove('opacity-80', 'cursor-not-allowed');
+            btn.style.minWidth = '';
+            const originalHtml = btn.getAttribute('data-original-html');
+            if (originalHtml) {
+                btn.innerHTML = originalHtml;
+                btn.removeAttribute('data-original-html');
             }
         });
     }
 });
 
-// ========== HANDLE BEFORE UNLOAD ==========
-window.addEventListener('beforeunload', function() {
-    // Ensure loader is visible during navigation
-    if (loader && isTransitioning) {
-        loader.style.display = 'flex';
-        loader.classList.remove('opacity-0');
-        loader.classList.add('opacity-100');
-    }
-});
-
 // ========== GLOBAL TOAST FUNCTION ==========
 window.showToast = function(message, isError = false) {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toast-message');
-    const toastIcon = document.getElementById('toast-icon');
-    
+    const toast      = document.getElementById('toast');
+    const toastMsg   = document.getElementById('toast-message');
+    const toastIcon  = document.getElementById('toast-icon');
+
     if (!toast) return;
-    
-    toastMessage.textContent = message;
-    
+
+    toastMsg.textContent = message;
+
     if (isError) {
         toast.classList.remove('bg-green-600');
         toast.classList.add('bg-red-600');
@@ -290,166 +151,32 @@ window.showToast = function(message, isError = false) {
         toast.classList.add('bg-green-600');
         toastIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
     }
-    
+
     toast.classList.remove('opacity-0', '-translate-y-5');
     toast.classList.add('opacity-100', 'translate-y-0');
-    
+
     setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
         toast.classList.add('opacity-0', '-translate-y-5');
     }, 3000);
 };
 
-// ========== ADMIN POLLING FOR ORDER UPDATES ==========
-let adminPollingInterval;
-let adminLastUpdateTime = localStorage.getItem('admin_last_order_update') || Date.now();
-
-function startAdminPolling() {
-    if (adminPollingInterval) clearInterval(adminPollingInterval);
-    
-    // Only start polling on admin pages
-    if (!window.location.pathname.includes('/admin')) return;
-    
-    adminPollingInterval = setInterval(() => {
-        // Don't poll during transitions
-        if (!isTransitioning && activeFormSubmissions === 0) {
-            checkAdminOrderUpdates();
-        }
-    }, 10000); // Check every 10 seconds
-}
-
-function checkAdminOrderUpdates() {
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (!csrfToken) return;
-    
-    fetch(window.location.origin + '/admin/orders/check-updates', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({ last_update: adminLastUpdateTime })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-    })
-    .then(data => {
-        if (data.updated_orders && data.updated_orders.length > 0) {
-            data.updated_orders.forEach(order => {
-                showAdminNotification(order);
-            });
-            adminLastUpdateTime = Date.now();
-            localStorage.setItem('admin_last_order_update', adminLastUpdateTime);
-            
-            // Reload the page to show updated data (only if not transitioning)
-            if (!isTransitioning && activeFormSubmissions === 0) {
-                setTimeout(() => {
-                    if (!isTransitioning && activeFormSubmissions === 0) {
-                        window.location.reload();
-                    }
-                }, 2000);
-            }
-        }
-    })
-    .catch(error => {
-        // Silent fail for polling errors
-        console.debug('Admin polling error:', error);
-    });
-}
-
-function showAdminNotification(order) {
-    let message = '';
-    let icon = '';
-    let bgClass = '';
-    
-    // Only show notifications for NEW ORDERS and PICKED UP ORDERS
-    if (order.status === 'pending' && !order.admin_confirmed_at) {
-        // New order placed
-        message = `🆕 NEW ORDER #${order.order_number} from ${order.customer_name} - ₱${order.total}`;
-        icon = '🆕';
-        bgClass = 'border-l-4 border-green-500 bg-green-50';
-    } else if (order.status === 'completed' && order.needs_payment_confirmation) {
-        // Customer picked up order (cash payment)
-        message = `✅ ORDER #${order.order_number} has been picked up by ${order.customer_name}`;
-        icon = '✅';
-        bgClass = 'border-l-4 border-blue-500 bg-blue-50';
-    } else {
-        // Don't show notifications for other status changes
-        return;
-    }
-    
-    // Create toast notification
-    const toast = document.createElement('div');
-    toast.className = `fixed top-20 right-4 ${bgClass} shadow-xl rounded-lg p-4 z-50 animate-slide-down max-w-md`;
-    toast.innerHTML = `
-        <div class="flex items-start gap-3">
-            <div class="text-2xl">${icon}</div>
-            <div class="flex-1">
-                <p class="font-bold text-gray-800">Order Update</p>
-                <p class="text-sm text-gray-600">${message}</p>
-                <p class="text-xs text-gray-400 mt-1">${new Date().toLocaleTimeString()}</p>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-    `;
-    document.body.appendChild(toast);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (toast && toast.remove) toast.remove();
-    }, 5000);
-    
-    // Also show browser notification
-    if (Notification.permission === 'granted') {
-        new Notification('Admin Order Update', {
-            body: message,
-            icon: '/favicon.ico'
-        });
-    }
-}
-
-// Request notification permission
-if (Notification.permission === 'default' && window.location.pathname.includes('/admin')) {
-    Notification.requestPermission();
-}
-
-// Start polling when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    startAdminPolling();
-});
-
-// Stop polling when leaving the page
-window.addEventListener('beforeunload', function() {
-    if (adminPollingInterval) clearInterval(adminPollingInterval);
-});
-
 // ========== IMAGE PREVIEW FUNCTIONS ==========
-// For create.blade.php
 const imageInput = document.getElementById('imageInput');
 if (imageInput && !imageInput.hasListener) {
     imageInput.hasListener = true;
     imageInput.addEventListener('change', function(e) {
         const previewContainer = document.getElementById('imagePreviewContainer');
-        const previewImg = document.getElementById('imagePreview');
-        const file = e.target.files[0];
-        
+        const previewImg       = document.getElementById('imagePreview');
+        const file             = e.target.files[0];
+
         if (file) {
-            // Check file size (2MB limit)
             if (file.size > 2 * 1024 * 1024) {
                 window.showToast('File is too large. Maximum size is 2MB.', true);
                 this.value = '';
                 if (previewContainer) previewContainer.style.display = 'none';
                 return;
             }
-            
-            // Check file type
             const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
             if (!validTypes.includes(file.type)) {
                 window.showToast('Invalid file type. Please upload JPG, PNG, or GIF.', true);
@@ -457,12 +184,11 @@ if (imageInput && !imageInput.hasListener) {
                 if (previewContainer) previewContainer.style.display = 'none';
                 return;
             }
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 if (previewImg) previewImg.src = e.target.result;
                 if (previewContainer) previewContainer.style.display = 'block';
-            }
+            };
             reader.readAsDataURL(file);
         } else {
             if (previewContainer) previewContainer.style.display = 'none';
@@ -470,84 +196,162 @@ if (imageInput && !imageInput.hasListener) {
     });
 }
 
-// For edit.blade.php with remove checkbox
-const editImageInput = document.getElementById('imageInput');
 const removeCheckbox = document.getElementById('remove_image');
-
-if (editImageInput && !editImageInput.hasEditListener) {
-    editImageInput.hasEditListener = true;
-    editImageInput.addEventListener('change', function(e) {
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        const previewImg = document.getElementById('imagePreview');
-        const file = e.target.files[0];
-        
-        if (file) {
-            // Check file size (2MB limit)
-            if (file.size > 2 * 1024 * 1024) {
-                window.showToast('File is too large. Maximum size is 2MB.', true);
-                this.value = '';
-                if (previewContainer) previewContainer.style.display = 'none';
-                return;
-            }
-            
-            // Check file type
-            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-            if (!validTypes.includes(file.type)) {
-                window.showToast('Invalid file type. Please upload JPG, PNG, or GIF.', true);
-                this.value = '';
-                if (previewContainer) previewContainer.style.display = 'none';
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (previewImg) previewImg.src = e.target.result;
-                if (previewContainer) previewContainer.style.display = 'block';
-                
-                // Uncheck remove image if it was checked
-                if (removeCheckbox) {
-                    removeCheckbox.checked = false;
-                }
-            }
-            reader.readAsDataURL(file);
-        } else {
-            if (previewContainer) previewContainer.style.display = 'none';
-        }
-    });
-}
-
-// Clear image function
-window.clearImage = function() {
-    const imageInput = document.getElementById('imageInput');
-    const previewContainer = document.getElementById('imagePreviewContainer');
-    
-    if (imageInput) imageInput.value = '';
-    if (previewContainer) previewContainer.style.display = 'none';
-};
-
-// Handle remove image checkbox
 if (removeCheckbox && !removeCheckbox.hasListener) {
     removeCheckbox.hasListener = true;
     removeCheckbox.addEventListener('change', function() {
-        const imageInput = document.getElementById('imageInput');
+        const imgInput         = document.getElementById('imageInput');
         const previewContainer = document.getElementById('imagePreviewContainer');
-        
         if (this.checked) {
-            // Clear any selected file
-            if (imageInput) imageInput.value = '';
+            if (imgInput) imgInput.value = '';
             if (previewContainer) previewContainer.style.display = 'none';
         }
     });
 }
+
+window.clearImage = function() {
+    const imgInput         = document.getElementById('imageInput');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    if (imgInput) imgInput.value = '';
+    if (previewContainer) previewContainer.style.display = 'none';
+};
 
 // ========== MAKE FUNCTIONS GLOBALLY AVAILABLE ==========
 window.showLoader = showLoader;
 window.hideLoader = hideLoader;
-window.showToast = showToast;
 
-// ========== SAFETY TIMEOUT - Hide loader if page takes too long ==========
-setTimeout(function() {
-    if (loader && loader.style.display !== 'none') {
-        hideLoader();
+// ========== ADMIN ORDER TOAST NOTIFICATIONS (Livewire → JS + global poll) ==========
+(function () {
+    const PENDING_KEY   = 'admin_pending_count';
+    const COMPLETED_KEY = 'admin_completed_count';
+
+    function getStored(key) {
+        const v = localStorage.getItem(key);
+        return v === null ? -1 : parseInt(v, 10);
     }
-}, 15000);
+
+    // Livewire fires this on the orders page — sync counts so the global
+    // poller won't re-fire the same notification after navigation.
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('admin-order-toast', (params) => {
+            showAdminOrderToast(params.message, params.type);
+            if (params.type === 'new-order' && params.pendingCount !== undefined) {
+                localStorage.setItem(PENDING_KEY, params.pendingCount);
+            }
+            if (params.type === 'picked-up' && params.completedCount !== undefined) {
+                localStorage.setItem(COMPLETED_KEY, params.completedCount);
+            }
+        });
+    });
+
+    // Global poller — runs on every admin page so toasts appear anywhere
+    function poll() {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+        fetch('/admin/orders/check-updates', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrf,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ last_update: Date.now() })
+        })
+        .then(r => {
+            if (!r.ok) { console.warn('[Admin Poller] HTTP', r.status); return null; }
+            return r.json();
+        })
+        .then(data => {
+            if (!data?.counts) return;
+
+            const storedPending   = getStored(PENDING_KEY);
+            const storedCompleted = getStored(COMPLETED_KEY);
+            const currentPending   = data.counts.pending;
+            const currentCompleted = data.counts.completed;
+
+            // New orders waiting for confirmation
+            if (storedPending >= 0 && currentPending > storedPending) {
+                const diff  = currentPending - storedPending;
+                const label = diff === 1 ? 'new order' : `${diff} new orders`;
+                showAdminOrderToast(`You have ${label} waiting for confirmation!`, 'new-order');
+            }
+
+            // Orders picked up by customers
+            if (storedCompleted >= 0 && currentCompleted > storedCompleted) {
+                const diff  = currentCompleted - storedCompleted;
+                const label = diff === 1 ? '1 order has' : `${diff} orders have`;
+                showAdminOrderToast(`✅ ${label} been picked up by the customer.`, 'picked-up');
+            }
+
+            localStorage.setItem(PENDING_KEY,   currentPending);
+            localStorage.setItem(COMPLETED_KEY, currentCompleted);
+        })
+        .catch(err => console.warn('[Admin Poller] fetch error:', err));
+    }
+
+    setTimeout(poll, 2000);
+    setInterval(poll, 15000);
+})();
+
+function showAdminOrderToast(message, type) {
+    const configs = {
+        'new-order': {
+            border: '#16a34a', iconBg: '#dcfce7', iconColor: '#16a34a',
+            iconPath: 'M12 4v16m8-8H4', title: 'New Order Received!', titleColor: '#15803d',
+        },
+        'picked-up': {
+            border: '#2563eb', iconBg: '#dbeafe', iconColor: '#2563eb',
+            iconPath: 'M5 13l4 4L19 7', title: 'Order Picked Up', titleColor: '#1d4ed8',
+        },
+    };
+
+    const cfg  = configs[type] || configs['new-order'];
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const toast = document.createElement('div');
+    toast.setAttribute('data-admin-toast', '');
+    toast.style.cssText = `
+        position:fixed;right:20px;z-index:9999;
+        max-width:360px;width:100%;
+        background:white;border-left:4px solid ${cfg.border};
+        border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.15);
+        padding:14px 16px;display:flex;align-items:flex-start;gap:12px;
+        animation:adminToastIn 0.35s cubic-bezier(0.22,1,0.36,1);
+    `;
+
+    toast.innerHTML = `
+        <div style="width:40px;height:40px;border-radius:50%;background:${cfg.iconBg};
+                    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="${cfg.iconColor}" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="${cfg.iconPath}"/>
+            </svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <p style="font-weight:700;font-size:13px;color:${cfg.titleColor};margin:0 0 2px;">${cfg.title}</p>
+            <p style="font-size:13px;color:#4b5563;margin:0;line-height:1.4;">${message}</p>
+            <p style="font-size:11px;color:#9ca3af;margin:4px 0 0;">${time}</p>
+        </div>
+        <button onclick="this.closest('[data-admin-toast]').remove()"
+                style="color:#d1d5db;background:none;border:none;cursor:pointer;padding:0;flex-shrink:0;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    `;
+
+    const existing = document.querySelectorAll('[data-admin-toast]');
+    toast.style.top = `${20 + existing.length * 85}px`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast?.remove(); }, 8000);
+}
+
+if (!document.getElementById('admin-toast-styles')) {
+    const s = document.createElement('style');
+    s.id = 'admin-toast-styles';
+    s.textContent = `
+        @keyframes adminToastIn {
+            from { opacity:0; transform:translateX(110%); }
+            to   { opacity:1; transform:translateX(0); }
+        }
+    `;
+    document.head.appendChild(s);
+}

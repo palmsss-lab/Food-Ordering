@@ -16,7 +16,7 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800">
+                <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                     My <span class="text-[#ea5a47]">Profile</span>
                 </h1>
             </div>

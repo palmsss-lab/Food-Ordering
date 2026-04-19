@@ -3,7 +3,7 @@
 @section('title', 'Edit Menu Item')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:py-15">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:py-12">
     <!-- Decorative Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-20 -right-20 w-96 h-96 bg-[#ea5a47] opacity-5 rounded-full blur-3xl"></div>
@@ -24,7 +24,7 @@
 
     <div class="relative z-10 max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <div class="absolute inset-0 bg-[#ea5a47] rounded-lg blur-md opacity-30"></div>
@@ -34,7 +34,7 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800">
+                <h1 class="text-xl sm:text-3xl font-black text-gray-800">
                     Edit <span class="text-[#ea5a47]">Menu Item</span>
                 </h1>
             </div>
@@ -48,14 +48,13 @@
             </a>
         </div>
 
-        <!-- Scrollable Main Card -->
-        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 relative overflow-hidden" 
-             style="max-height: calc(100vh - 180px); overflow-y: auto;">
+        <!-- Main Card -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 relative overflow-hidden">
             <!-- Card decorative elements -->
             <div class="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#ea5a47] to-[#c53030] opacity-5 rounded-br-3xl"></div>
             <div class="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#ea5a47] to-[#c53030] opacity-5 rounded-tl-3xl"></div>
             
-            <div class="p-8">
+            <div class="p-4 sm:p-6 md:p-8">
                 <form id="edit-menu-form" action="{{ route('admin.menu-items.update', $menuItem) }}" method="POST" enctype="multipart/form-data" class="space-y-6 relative">
                     @csrf
                     @method('PUT')
@@ -349,6 +348,7 @@
                     <div class="flex gap-4 pt-4 border-t border-gray-200">
                         <button type="submit"
                                 id="update-btn"
+                                data-loading-text="Saving Changes..."
                                 class="flex items-center justify-center gap-2 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-3 px-8 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -407,28 +407,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
-            // Prevent double submission
+            // Prevent double submission (global handler handles loader + button state)
             if (isSubmitting) {
                 e.preventDefault();
                 return;
             }
-            
             isSubmitting = true;
-            
-            // Show loader
-            if (window.showLoader) {
-                window.showLoader();
-            }
-            
-            // Disable submit button to prevent multiple clicks
-            const updateBtn = document.getElementById('update-btn');
-            if (updateBtn) {
-                updateBtn.disabled = true;
-                updateBtn.style.opacity = '0.7';
-                updateBtn.style.cursor = 'not-allowed';
-            }
-            
-            // Form will submit naturally, loader stays visible until page loads
         });
     }
     

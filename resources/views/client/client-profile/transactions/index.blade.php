@@ -3,7 +3,7 @@
 @section('title', 'My Transactions')
 
 @section('content')
-<div class="max-w-6xl mx-auto mt-32 px-4 mb-20">
+<div class="max-w-6xl mx-auto mt-24 md:mt-32 px-4 mb-20">
     
     <!-- Header -->
     <div class="flex items-center gap-3 mb-8">
@@ -12,7 +12,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
         </div>
-        <h1 class="text-4xl font-black text-gray-800">My <span class="text-[#ea5a47]">Transactions</span></h1>
+        <h1 class="text-2xl sm:text-4xl font-black text-gray-800">My <span class="text-[#ea5a47]">Transactions</span></h1>
     </div>
 
     @if($transactions->isEmpty())
@@ -29,18 +29,23 @@
                 @php
                     $paymentMethod = $transaction->payment_method;
                 @endphp
+                @php $isRefunded = $transaction->isRefunded(); @endphp
                 <div class="bg-white border-2 rounded-2xl p-6 hover:shadow-lg transition-all
-                    @if($paymentMethod == 'cash') border-orange-200
+                    @if($isRefunded) border-red-200
+                    @elseif($paymentMethod == 'cash') border-orange-200
                     @elseif($paymentMethod == 'gcash') border-blue-200
                     @else border-purple-200
                     @endif">
-                    
+
                     <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-2 flex-wrap">
                                 <span class="text-sm font-semibold text-gray-500">Transaction #:</span>
                                 <span class="font-bold text-[#ea5a47]">{{ $transaction->transaction_number }}</span>
-                                
+                                <span class="text-sm text-gray-400">|</span>
+                                <span class="text-sm font-semibold text-gray-500">Order #:</span>
+                                <span class="text-sm font-medium text-gray-700">{{ $transaction->order_number }}</span>
+
                                 <!-- Payment Method Badge -->
                                 @if($paymentMethod == 'cash')
                                     <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
@@ -55,11 +60,27 @@
                                         💳 Card
                                     </span>
                                 @endif
+
+                                <!-- Refund Status Badge -->
+                                @if($transaction->payment_status === 'refunded')
+                                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                                        ↩ Refunded
+                                    </span>
+                                @elseif($transaction->payment_status === 'partial_refund')
+                                    <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
+                                        ↩ Partially Refunded
+                                    </span>
+                                @endif
                             </div>
-                            
+
                             <p class="text-gray-600 mb-2">
-                                {{ $transaction->items->count() }} item(s) • 
+                                {{ $transaction->items->count() }} item(s) •
                                 Total: <span class="font-bold text-[#ea5a47]">{{ $transaction->formatted_total }}</span>
+                                @if($isRefunded && $transaction->refund_amount)
+                                    <span class="text-red-500 font-semibold ml-1">
+                                        (−₱{{ number_format($transaction->refund_amount, 2) }} refunded)
+                                    </span>
+                                @endif
                             </p>
                             
                             <p class="text-sm text-gray-400">

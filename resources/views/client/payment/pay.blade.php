@@ -3,7 +3,7 @@
 @section('title', 'Pay for Order')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
+<div class="mt-24 relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <div class="relative z-10 max-w-4xl mx-auto">
         
         <!-- Header with back button -->
@@ -19,7 +19,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
             </div>
-            <h1 class="text-4xl font-black text-gray-800">Complete <span class="text-[#ea5a47]">Payment</span></h1>
+            <h1 class="text-2xl sm:text-4xl font-black text-gray-800">Complete <span class="text-[#ea5a47]">Payment</span></h1>
         </div>
 
         <!-- Order Summary Card -->

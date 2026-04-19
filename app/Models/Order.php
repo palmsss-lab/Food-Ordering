@@ -5,12 +5,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
 
     // In app/Models/Order.php, add this method:
@@ -18,22 +21,26 @@ class Order extends Model
 protected static function booted()
 {
     static::updating(function ($order) {
-        if ($order->isDirty('order_status')) {
-            $oldStatus = $order->getOriginal('order_status');
-            $newStatus = $order->order_status;
-            
+        if ($order->isDirty('order_status') || $order->isDirty('admin_confirmed_at')) {
             Log::info('Order status changing', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
+                'order_id'           => $order->id,
+                'order_number'       => $order->order_number,
+                'old_status'         => $order->getOriginal('order_status'),
+                'new_status'         => $order->order_status,
                 'admin_confirmed_at' => $order->admin_confirmed_at,
-                'payment_method' => $order->payment_method,
-                'url' => request()->fullUrl(),
-                'method' => request()->method(),
-                'user_id' => Auth::id()
+                'payment_method'     => $order->payment_method,
+                'user_id'            => Auth::id(),
             ]);
         }
+    });
+
+    // Bust the cached counts immediately whenever an order changes,
+    // so the next Livewire poll sees fresh counts without waiting for TTL.
+    static::saved(function () {
+        Cache::forget('admin_order_counts');
+    });
+    static::deleted(function () {
+        Cache::forget('admin_order_counts');
     });
 }
 
@@ -54,6 +61,12 @@ protected static function booted()
         'subtotal',
         'tax',
         'discount',
+        'promo_discount',
+        'promo_label',
+        'promotion_id',
+        'voucher_id',
+        'discount_type',
+        'discount_label',
         'total',
         'notes',
         'ordered_at',
@@ -67,11 +80,12 @@ protected static function booted()
     ];
 
     protected $casts = [
-        'subtotal' => 'float',
-        'tax' => 'float',
-        'discount' => 'float',
-        'total' => 'float',
-        'refund_amount' => 'float',
+        'subtotal' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'promo_discount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
         'ordered_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'prepared_at' => 'datetime',
@@ -131,6 +145,30 @@ protected static function booted()
     }
 
     /**
+     * Get the applied voucher
+     */
+    public function voucher()
+    {
+        return $this->belongsTo(\App\Models\Voucher::class);
+    }
+
+    /**
+     * Get the applied promotion
+     */
+    public function promotion()
+    {
+        return $this->belongsTo(\App\Models\Promotion::class);
+    }
+
+    /**
+     * Get the transaction for this order
+     */
+    public function transaction()
+    {
+        return $this->hasOne(Transaction::class);
+    }
+
+    /**
      * Get payment method from latest payment (for backward compatibility)
      */
     public function getPaymentMethodAttribute()
@@ -149,24 +187,24 @@ protected static function booted()
  */
     public function getDisplayStatusAttribute()
     {
+        // Refunded payment → own tab regardless of order_status
+        if (in_array($this->payment_status, ['refunded', 'partial_refund'])) {
+            return 'refunded';
+        }
+
         // If order is cancelled/completed/etc, return actual status
         if (!in_array($this->order_status, ['pending', 'confirmed', 'preparing'])) {
             return $this->order_status;
         }
-        
+
         // IMPORTANT: If admin_confirmed_at is NULL, order should be in pending tab
         // regardless of what order_status says
         if (!$this->admin_confirmed_at) {
             return 'pending';
         }
-        
-        // If admin_confirmed_at is set, order can show as preparing
-        if ($this->admin_confirmed_at) {
-            return 'preparing';
-        }
-        
-        // Fallback
-        return $this->order_status;
+
+        // admin_confirmed_at is set — order is in preparation
+        return 'preparing';
     }
 
     /**

@@ -85,23 +85,29 @@
                 </div>
 
                 <div class="text-right">
-                    <a href="#" class="text-sm text-gray-500 hover:text-[#ea5a47] transition-colors">
-                        Forgot password?
-                    </a>
                 </div>
 
                 <button type="submit"
+                        id="login-btn"
                         class="w-full bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-3 px-4 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-[#c53030] hover:to-[#ea5a47] flex items-center justify-center gap-2 group">
-                    <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <!-- Default state -->
+                    <svg id="login-btn-icon" class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
-                    <span>Login</span>
+                    <!-- Spinner (hidden by default) -->
+                    <svg id="login-btn-spinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span id="login-btn-text">Login</span>
                 </button>
             </form>
-            
+
+            <!-- Divider -->
+
             <div class="text-center mt-6 pt-4 border-t border-gray-100">
                 <p class="text-gray-600">
-                    Don't have an account? 
+                    Don't have an account?
                     <a href="{{ route('signup.form') }}" class="text-[#ea5a47] font-semibold hover:text-[#c53030] transition-colors hover:underline">
                         Sign up here
                     </a>
@@ -136,9 +142,52 @@ function togglePassword(inputId, button) {
     }
 }
 
-// NO AJAX CODE - Let the form submit normally
-// The loader.js will automatically show the loader when the form submits
-// The page will redirect normally after login
+// Real-time blur validation
+(function () {
+    const usernameInput = document.querySelector('input[name="username"]');
+
+    function showFieldError(input, message) {
+        clearFieldError(input);
+        input.classList.add('border-red-500', 'bg-red-50');
+        const err = document.createElement('p');
+        err.className = 'field-error text-red-500 text-xs mt-1';
+        err.textContent = message;
+        input.parentElement.appendChild(err);
+    }
+
+    function clearFieldError(input) {
+        input.classList.remove('border-red-500', 'bg-red-50');
+        const prev = input.parentElement.querySelector('.field-error');
+        if (prev) prev.remove();
+    }
+
+    if (usernameInput) {
+        usernameInput.addEventListener('blur', function () {
+            if (!this.value.trim()) {
+                showFieldError(this, 'Please enter your username or email.');
+            } else {
+                clearFieldError(this);
+            }
+        });
+        usernameInput.addEventListener('input', function () {
+            if (this.value.trim()) clearFieldError(this);
+        });
+    }
+})();
+
+document.querySelector('form').addEventListener('submit', function () {
+    const btn     = document.getElementById('login-btn');
+    const icon    = document.getElementById('login-btn-icon');
+    const spinner = document.getElementById('login-btn-spinner');
+    const text    = document.getElementById('login-btn-text');
+
+    btn.disabled = true;
+    btn.classList.add('opacity-80', 'cursor-not-allowed');
+    btn.classList.remove('hover:scale-[1.02]');
+    icon.classList.add('hidden');
+    spinner.classList.remove('hidden');
+    text.textContent = 'Logging in...';
+});
 </script>
 
 <style>

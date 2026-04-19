@@ -6,16 +6,16 @@
 <div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
     <div class="relative z-10 max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div class="flex items-center gap-3">
                 <div class="bg-[#ea5a47] p-3 rounded-2xl shadow-lg">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                 </div>
-                <h1 class="text-4xl font-black text-gray-800">Sales <span class="text-[#ea5a47]">Reports</span></h1>
+                <h1 class="text-2xl sm:text-4xl font-black text-gray-800">Sales <span class="text-[#ea5a47]">Reports</span></h1>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
                 <a href="{{ route('admin.orders.transactions') }}" 
                    class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,13 +66,13 @@
                             <label class="block text-gray-700 font-medium mb-2">From Date</label>
                             <input type="date" name="date_from" value="{{ $dateFrom instanceof Carbon ? $dateFrom->format('Y-m-d') : $dateFrom }}" 
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-[#ea5a47] focus:ring-2 focus:ring-[#ea5a47]/20 outline-none transition-all"
-                                   style="min-width: 180px;">
+                                   >
                         </div>
                         <div>
                             <label class="block text-gray-700 font-medium mb-2">To Date</label>
                             <input type="date" name="date_to" value="{{ $dateTo instanceof Carbon ? $dateTo->format('Y-m-d') : $dateTo }}" 
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-[#ea5a47] focus:ring-2 focus:ring-[#ea5a47]/20 outline-none transition-all"
-                                   style="min-width: 180px;">
+                                   >
                         </div>
                     </div>
                 </div>
@@ -87,82 +87,140 @@
         </div>
 
         <!-- Scrollable Content Container -->
-        <div class="space-y-8" style="max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 8px;" id="scrollable-content">
+        <div class="space-y-8 pr-2" id="scrollable-content">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+
+                {{-- Net Revenue --}}
                 <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <p class="text-sm text-gray-500">Total Sales</p>
-                    <p class="text-3xl font-bold text-[#ea5a47]">₱{{ number_format($summary['total_sales'], 2) }}</p>
+                    <p class="text-sm text-gray-500 font-medium">Net Revenue</p>
+                    <p class="text-3xl font-bold text-[#ea5a47]">₱{{ number_format($summary['net_revenue'], 2) }}</p>
+                    @if($summary['gross_sales'] != $summary['net_revenue'])
+                        <div class="mt-2 space-y-0.5">
+                            <p class="text-xs text-gray-400">Gross: ₱{{ number_format($summary['gross_sales'], 2) }}</p>
+                            <p class="text-xs text-indigo-500">Refunded: −₱{{ number_format($summary['total_refunded'], 2) }}</p>
+                        </div>
+                    @endif
                     @if(isset($comparison))
                         <p class="text-xs mt-2 {{ $comparison['trend'] == 'up' ? 'text-green-600' : 'text-red-600' }}">
                             {{ $comparison['trend'] == 'up' ? '▲' : '▼' }} {{ $comparison['change_percent'] }}% vs previous period
                         </p>
                     @endif
                 </div>
+
+                {{-- Transactions & Refunds --}}
                 <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <p class="text-sm text-gray-500">Total Transactions</p>
+                    <p class="text-sm text-gray-500 font-medium">Transactions</p>
                     <p class="text-3xl font-bold text-[#ea5a47]">{{ $summary['total_transactions'] }}</p>
+                    @if($summary['refund_count'] > 0)
+                        <p class="text-xs text-indigo-500 mt-2">
+                            {{ $summary['refund_count'] }} refund{{ $summary['refund_count'] > 1 ? 's' : '' }} processed
+                        </p>
+                    @endif
                 </div>
+
+                {{-- Average Order Value --}}
                 <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <p class="text-sm text-gray-500">Average Order Value</p>
+                    <p class="text-sm text-gray-500 font-medium">Avg. Order Value</p>
                     <p class="text-3xl font-bold text-[#ea5a47]">₱{{ number_format($summary['average_order'], 2) }}</p>
+                    <p class="text-xs text-gray-400 mt-2">Paid orders only</p>
                 </div>
+
+                {{-- Items Sold --}}
                 <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <p class="text-sm text-gray-500">Items Sold</p>
+                    <p class="text-sm text-gray-500 font-medium">Items Sold</p>
                     <p class="text-3xl font-bold text-[#ea5a47]">{{ $summary['total_items'] }}</p>
+                    <p class="text-xs text-gray-400 mt-2">From paid orders</p>
                 </div>
+
             </div>
 
             <!-- Sales Trend Chart -->
             <div class="bg-white rounded-xl p-6 shadow-lg">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Sales Trend</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Sales Trend</h2>
+                    @if($dailyBreakdown->where('refund_amount', '>', 0)->isNotEmpty())
+                        <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full font-medium">
+                            ↩ Refunds present — see purple segments
+                        </span>
+                    @endif
+                </div>
+
                 @if($dailyBreakdown->isEmpty())
                     <p class="text-gray-500 text-center py-8">No sales data for this period</p>
                 @else
                     @php
-                        $dataPoints = $dailyBreakdown->count();
+                        $dataPoints  = $dailyBreakdown->count();
                         $isLongPeriod = $dataPoints > 15;
-                        $maxTotal = $dailyBreakdown->max('total') ?: 1;
-                        $averageTotal = $dailyBreakdown->avg('total') ?: 0;
+                        // Scale by gross (net + refund) so refund cap fits within chart height
+                        $maxGross    = $dailyBreakdown->map(fn($i) => $i['total'] + ($i['refund_amount'] ?? 0))->max() ?: 1;
+                        $averageNet  = $dailyBreakdown->avg('total') ?: 0;
+                        $hasRefunds  = $dailyBreakdown->where('refund_amount', '>', 0)->isNotEmpty();
                     @endphp
-                    
+
                     @if($isLongPeriod)
                         <div class="relative">
-                            <div class="overflow-x-auto pb-8" style="max-width: 100%;" id="chart-scroll-container">
+                            <div class="overflow-x-auto pb-8" style="max-width:100%;" id="chart-scroll-container">
                                 <div class="relative" style="min-width: {{ $dataPoints * 45 }}px;">
                                     <div class="flex items-end gap-2" style="height: 250px;">
-                                        @foreach($dailyBreakdown as $index => $item)
+                                        @foreach($dailyBreakdown as $item)
                                             @php
-                                                $height = ($item['total'] / $maxTotal) * 200;
+                                                $refundAmt   = (float)($item['refund_amount'] ?? 0);
+                                                $refundCnt   = (int)($item['refund_count'] ?? 0);
+                                                $gross       = $item['total'] + $refundAmt;
+                                                $netHeight   = ($gross > 0) ? ($item['total'] / $maxGross) * 200 : 0;
+                                                $refundHeight= ($gross > 0) ? ($refundAmt   / $maxGross) * 200 : 0;
                                                 $displayDate = $item['display_date'] ?? $item['formatted_date'];
-                                                $percentageOfMax = ($item['total'] / $maxTotal) * 100;
-                                                if ($percentageOfMax >= 70) {
-                                                    $barColor = 'bg-green-500';
-                                                } elseif ($percentageOfMax >= 40) {
-                                                    $barColor = 'bg-yellow-500';
-                                                } else {
-                                                    $barColor = 'bg-red-500';
-                                                }
+                                                $pct         = ($gross / $maxGross) * 100;
+                                                $barColor    = $pct >= 70 ? 'bg-green-500' : ($pct >= 40 ? 'bg-yellow-500' : 'bg-[#ea5a47]');
                                             @endphp
-                                            <div class="relative flex flex-col items-center" style="width: 35px;">
-                                                <div class="relative w-full group" style="height: 200px;">
-                                                    <div class="absolute bottom-0 w-full bg-gray-200 rounded-t" style="height: 200px;"></div>
-                                                    <div class="absolute bottom-0 w-full {{ $barColor }} rounded-t transition-all duration-300 hover:opacity-80 cursor-pointer" 
-                                                         style="height: {{ $height }}px;">
-                                                    </div>
-                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 pointer-events-none shadow-lg" style="min-width: 140px;">
-                                                        <div class="font-bold text-center border-b border-gray-600 pb-1 mb-1">{{ $displayDate }}</div>
+                                            <div class="relative flex flex-col items-center group" style="width:35px;">
+                                                <div class="relative w-full" style="height:200px;">
+                                                    {{-- Track --}}
+                                                    <div class="absolute bottom-0 w-full bg-gray-100 rounded-t" style="height:200px;"></div>
+                                                    {{-- Net revenue bar --}}
+                                                    <div class="absolute bottom-0 w-full {{ $barColor }} rounded-t transition-all duration-300"
+                                                         style="height:{{ $netHeight }}px;"></div>
+                                                    {{-- Refund indicator: dashed line up to gross level + dot --}}
+                                                    @if($refundAmt > 0)
+                                                        {{-- dashed stem --}}
+                                                        <div class="absolute left-1/2 -translate-x-1/2"
+                                                             style="width:2px; height:{{ $refundHeight }}px; bottom:{{ $netHeight }}px;
+                                                                    background: repeating-linear-gradient(to top,#6366f1 0,#6366f1 4px,transparent 4px,transparent 8px);"></div>
+                                                        {{-- dot at gross level --}}
+                                                        <div class="absolute left-1/2 -translate-x-1/2 rounded-full"
+                                                             style="width:7px; height:7px; background:#6366f1; bottom:{{ $netHeight + $refundHeight - 3.5 }}px;"></div>
+                                                    @endif
+                                                    {{-- Tooltip --}}
+                                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 pointer-events-none shadow-xl" style="min-width:150px;">
+                                                        <div class="font-bold text-center border-b border-gray-700 pb-1 mb-1">{{ $displayDate }}</div>
                                                         <div class="flex justify-between gap-4">
-                                                            <span>Sales:</span>
-                                                            <span class="text-green-300 font-medium">₱{{ number_format($item['total'], 2) }}</span>
+                                                            <span class="text-gray-300">Net Revenue:</span>
+                                                            <span class="text-green-300 font-semibold">₱{{ number_format($item['total'], 2) }}</span>
+                                                        </div>
+                                                        @if($refundAmt > 0)
+                                                        <div class="flex justify-between gap-4">
+                                                            <span class="text-gray-300">Refunded:</span>
+                                                            <span class="text-indigo-300 font-semibold">−₱{{ number_format($refundAmt, 2) }}</span>
                                                         </div>
                                                         <div class="flex justify-between gap-4">
-                                                            <span>Orders:</span>
-                                                            <span class="text-blue-300 font-medium">{{ $item['count'] }}</span>
+                                                            <span class="text-gray-300">Gross:</span>
+                                                            <span class="text-white font-semibold">₱{{ number_format($gross, 2) }}</span>
                                                         </div>
+                                                        @endif
+                                                        <div class="flex justify-between gap-4 border-t border-gray-700 pt-1 mt-1">
+                                                            <span class="text-gray-300">Orders:</span>
+                                                            <span class="text-blue-300 font-semibold">{{ $item['count'] }}</span>
+                                                        </div>
+                                                        @if($refundCnt > 0)
+                                                        <div class="flex justify-between gap-4">
+                                                            <span class="text-gray-300">Refunds:</span>
+                                                            <span class="text-indigo-300 font-semibold">{{ $refundCnt }}</span>
+                                                        </div>
+                                                        @endif
                                                     </div>
                                                 </div>
-                                                <span class="text-xs mt-2 text-gray-600 transform rotate-45 origin-top-left whitespace-nowrap">
+                                                <span class="text-xs mt-2 text-gray-500 transform rotate-45 origin-top-left whitespace-nowrap">
                                                     {{ $item['formatted_date'] }}
                                                 </span>
                                             </div>
@@ -176,38 +234,70 @@
                         <div class="h-80 flex items-end justify-center gap-3">
                             @foreach($dailyBreakdown as $item)
                                 @php
-                                    $height = ($item['total'] / $maxTotal) * 220;
-                                    $displayDate = $item['display_date'] ?? $item['formatted_date'];
-                                    if ($item['total'] >= $averageTotal * 1.2) {
-                                        $barColor = 'bg-green-500';
-                                        $shadowColor = 'rgba(34, 197, 94, 0.3)';
-                                    } elseif ($item['total'] >= $averageTotal) {
-                                        $barColor = 'bg-green-400';
-                                        $shadowColor = 'rgba(34, 197, 94, 0.2)';
-                                    } elseif ($item['total'] >= $averageTotal * 0.6) {
-                                        $barColor = 'bg-yellow-500';
-                                        $shadowColor = 'rgba(234, 179, 8, 0.2)';
+                                    $refundAmt    = (float)($item['refund_amount'] ?? 0);
+                                    $refundCnt    = (int)($item['refund_count'] ?? 0);
+                                    $gross        = $item['total'] + $refundAmt;
+                                    $netHeight    = ($gross > 0) ? ($item['total'] / $maxGross) * 220 : 0;
+                                    $refundHeight = ($gross > 0) ? ($refundAmt   / $maxGross) * 220 : 0;
+                                    $displayDate  = $item['display_date'] ?? $item['formatted_date'];
+                                    if ($item['total'] >= $averageNet * 1.2) {
+                                        $barColor    = 'bg-green-500';
+                                        $shadowColor = 'rgba(34,197,94,0.3)';
+                                    } elseif ($item['total'] >= $averageNet) {
+                                        $barColor    = 'bg-green-400';
+                                        $shadowColor = 'rgba(34,197,94,0.2)';
+                                    } elseif ($item['total'] >= $averageNet * 0.6) {
+                                        $barColor    = 'bg-yellow-500';
+                                        $shadowColor = 'rgba(234,179,8,0.2)';
                                     } else {
-                                        $barColor = 'bg-red-500';
-                                        $shadowColor = 'rgba(239, 68, 68, 0.2)';
+                                        $barColor    = 'bg-[#ea5a47]';
+                                        $shadowColor = 'rgba(234,90,71,0.2)';
                                     }
                                 @endphp
                                 <div class="flex-1 flex flex-col items-center max-w-[100px] group">
-                                    <div class="w-full relative" style="height: 220px;">
-                                        <div class="absolute bottom-0 w-full bg-gray-200 rounded-t" style="height: 220px;"></div>
-                                        <div class="absolute bottom-0 w-full {{ $barColor }} rounded-t transition-all duration-300 group-hover:opacity-80 cursor-pointer" 
-                                             style="height: {{ $height }}px; box-shadow: 0 -4px 12px {{ $shadowColor }};">
-                                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 pointer-events-none shadow-lg">
-                                                <div class="font-bold text-center border-b border-gray-600 pb-1 mb-1">{{ $displayDate }}</div>
-                                                <div class="flex justify-between gap-4">
-                                                    <span>Sales:</span>
-                                                    <span class="text-green-300 font-medium">₱{{ number_format($item['total'], 2) }}</span>
-                                                </div>
-                                                <div class="flex justify-between gap-4">
-                                                    <span>Orders:</span>
-                                                    <span class="text-blue-300 font-medium">{{ $item['count'] }}</span>
-                                                </div>
+                                    <div class="w-full relative" style="height:220px;">
+                                        {{-- Track --}}
+                                        <div class="absolute bottom-0 w-full bg-gray-100 rounded-t" style="height:220px;"></div>
+                                        {{-- Net revenue bar --}}
+                                        <div class="absolute bottom-0 w-full {{ $barColor }} rounded-t transition-all duration-300"
+                                             style="height:{{ $netHeight }}px; box-shadow: 0 -4px 12px {{ $shadowColor }};"></div>
+                                        {{-- Refund indicator: dashed line up to gross level + dot --}}
+                                        @if($refundAmt > 0)
+                                            {{-- dashed stem --}}
+                                            <div class="absolute left-1/2 -translate-x-1/2"
+                                                 style="width:2px; height:{{ $refundHeight }}px; bottom:{{ $netHeight }}px;
+                                                        background: repeating-linear-gradient(to top,#6366f1 0,#6366f1 4px,transparent 4px,transparent 8px);"></div>
+                                            {{-- dot at gross level --}}
+                                            <div class="absolute left-1/2 -translate-x-1/2 rounded-full"
+                                                 style="width:8px; height:8px; background:#6366f1; bottom:{{ $netHeight + $refundHeight - 4 }}px; box-shadow:0 0 0 2px #fff,0 0 0 3px #6366f1;"></div>
+                                        @endif
+                                        {{-- Tooltip --}}
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-20 pointer-events-none shadow-xl">
+                                            <div class="font-bold text-center border-b border-gray-700 pb-1 mb-1">{{ $displayDate }}</div>
+                                            <div class="flex justify-between gap-4">
+                                                <span class="text-gray-300">Net Revenue:</span>
+                                                <span class="text-green-300 font-semibold">₱{{ number_format($item['total'], 2) }}</span>
                                             </div>
+                                            @if($refundAmt > 0)
+                                            <div class="flex justify-between gap-4">
+                                                <span class="text-gray-300">Refunded:</span>
+                                                <span class="text-indigo-300 font-semibold">−₱{{ number_format($refundAmt, 2) }}</span>
+                                            </div>
+                                            <div class="flex justify-between gap-4">
+                                                <span class="text-gray-300">Gross:</span>
+                                                <span class="text-white font-semibold">₱{{ number_format($gross, 2) }}</span>
+                                            </div>
+                                            @endif
+                                            <div class="flex justify-between gap-4 border-t border-gray-700 pt-1 mt-1">
+                                                <span class="text-gray-300">Orders:</span>
+                                                <span class="text-blue-300 font-semibold">{{ $item['count'] }}</span>
+                                            </div>
+                                            @if($refundCnt > 0)
+                                            <div class="flex justify-between gap-4">
+                                                <span class="text-gray-300">Refunds:</span>
+                                                <span class="text-indigo-300 font-semibold">{{ $refundCnt }}</span>
+                                            </div>
+                                            @endif
                                         </div>
                                     </div>
                                     <span class="text-xs mt-2 text-gray-600 text-center font-medium">{{ $item['formatted_date'] }}</span>
@@ -215,20 +305,31 @@
                             @endforeach
                         </div>
                     @endif
-                    
-                    <div class="flex justify-center gap-6 mt-6 pt-4 border-t border-gray-200">
+
+                    {{-- Legend --}}
+                    <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-6 pt-4 border-t border-gray-200">
                         <div class="flex items-center gap-2">
                             <div class="w-4 h-4 bg-green-500 rounded"></div>
-                            <span class="text-xs text-gray-600">High Revenue (70%+)</span>
+                            <span class="text-xs text-gray-600">High Revenue (≥120% avg)</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="w-4 h-4 bg-yellow-500 rounded"></div>
-                            <span class="text-xs text-gray-600">Medium Revenue (40-69%)</span>
+                            <span class="text-xs text-gray-600">Medium Revenue (60–120%)</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 bg-red-500 rounded"></div>
-                            <span class="text-xs text-gray-600">Low Revenue (Below 40%)</span>
+                            <div class="w-4 h-4 bg-[#ea5a47] rounded"></div>
+                            <span class="text-xs text-gray-600">Low Revenue (&lt;60%)</span>
                         </div>
+                        @if($hasRefunds)
+                        <div class="flex items-center gap-2">
+                            {{-- mini dashed line + dot to match the chart --}}
+                            <div class="relative flex flex-col items-center" style="width:12px; height:16px;">
+                                <div class="rounded-full" style="width:7px;height:7px;background:#6366f1;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #6366f1;"></div>
+                                <div style="width:2px;height:9px;background:repeating-linear-gradient(to bottom,#6366f1 0,#6366f1 3px,transparent 3px,transparent 6px);"></div>
+                            </div>
+                            <span class="text-xs text-gray-600">Refund (dot = gross level)</span>
+                        </div>
+                        @endif
                     </div>
                 @endif
             </div>

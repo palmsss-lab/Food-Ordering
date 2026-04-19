@@ -5,11 +5,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 
 class MenuItem extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'menu_items';
     
@@ -30,7 +31,7 @@ class MenuItem extends Model
     ];
 
     protected $casts = [
-        'price' => 'float',
+        'price' => 'decimal:2',
         'stock' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -55,7 +56,7 @@ class MenuItem extends Model
      */
     public function category()
     {
-        return $this->belongsTo(Category::class, 'categories_id');
+        return $this->belongsTo(Category::class, 'categories_id')->withTrashed();
     }
 
     // ==================== FORMATTERS ====================
@@ -249,8 +250,10 @@ class MenuItem extends Model
             return $query;
         }
         
-        return $query->where('name', 'LIKE', $term . '%')
-                     ->orWhere('name', 'LIKE', '% ' . $term . '%');
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'LIKE', "%{$term}%")
+              ->orWhere('description', 'LIKE', "%{$term}%");
+        });
     }
 
     /**

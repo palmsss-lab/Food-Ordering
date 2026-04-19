@@ -74,7 +74,6 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('order_status');
             $table->index('payment_status');
-            $table->index('payment_method');
             $table->index('order_number');
             $table->index('ordered_at');
         });

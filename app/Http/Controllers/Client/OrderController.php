@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,37 +19,8 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $tab = $request->get('tab', 'pending');
-        
-        $orders = Order::with(['items', 'payments' => function($q) {
-                $q->latest();
-            }])
-            ->where('user_id', Auth::id())
-            ->orderBy('ordered_at', 'desc')
-            ->get();
-        
-        // Force correct display status for each order
-        foreach ($orders as $order) {
-            // For GCash/Card orders that are in preparing/confirmed but not confirmed by admin
-            if (in_array($order->payment_method, ['gcash', 'card']) && 
-                !$order->admin_confirmed_at && 
-                in_array($order->order_status, ['preparing', 'confirmed'])) {
-                
-                // Override the display_status by adding a temporary attribute
-                $order->display_status = 'pending';
-            }
-            
-            // For Cash orders that are in preparing but not confirmed by admin
-            if ($order->payment_method === 'cash' && 
-                !$order->admin_confirmed_at && 
-                $order->order_status === 'preparing') {
-                
-                // Override the display_status
-                $order->display_status = 'pending';
-            }
-        }
-        
-        return view('client.orders.index', compact('orders', 'tab'));
+        // Data is fetched by the Livewire\Client\OrdersList component
+        return view('client.orders.index');
     }
 
     /**
@@ -91,12 +63,13 @@ class OrderController extends Controller
             // For GCash/Card orders, create transaction immediately
             // For Cash orders, transaction will be created when admin marks as paid
             if ($order->payment_method !== 'cash') {
-                $existingTransaction = Transaction::where('order_number', $order->order_number)->first();
-                
+                $existingTransaction = Transaction::where('order_id', $order->id)->first();
+
                 if (!$existingTransaction) {
                     $transaction = Transaction::create([
                         'transaction_number' => Transaction::generateTransactionNumber(),
                         'order_number' => $order->order_number,
+                        'order_id' => $order->id,
                         'user_id' => $order->user_id,
                         'customer_name' => $order->customer_name,
                         'customer_email' => $order->customer_email,
@@ -120,7 +93,6 @@ class OrderController extends Controller
                             'quantity' => $item->quantity,
                             'price' => $item->price,
                             'subtotal' => $item->subtotal,
-                            'special_instructions' => $item->special_instructions,
                         ]);
                     }
                 }
@@ -139,6 +111,24 @@ class OrderController extends Controller
             DB::rollBack();
             return back()->with('error', 'Failed to update order status.');
         }
+    }
+
+    /**
+     * Download PDF receipt for an order
+     */
+    public function downloadReceipt($orderNumber)
+    {
+        set_time_limit(120);
+
+        $order = Order::with(['items', 'payments'])
+            ->where('order_number', $orderNumber)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $pdf = Pdf::loadView('pdf.order-receipt', compact('order'))
+            ->setPaper([0, 0, 340, 700], 'portrait');
+
+        return $pdf->download("order-receipt-{$order->order_number}.pdf");
     }
 
     /**

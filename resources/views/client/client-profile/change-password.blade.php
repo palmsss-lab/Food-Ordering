@@ -2,6 +2,7 @@
 
 @section('title', 'Change Password')
 
+@section('content')
 <div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden">
     <!-- Decorative Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -28,7 +29,7 @@
         @endfor
     </div>
 
-    <div class="relative z-10 max-w-2xl mx-auto mt-[170px] px-4 mb-20">
+    <div class="relative z-10 max-w-2xl mx-auto mt-24 md:mt-32 px-4 mb-20">
         <!-- Main Card with enhanced styling -->
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden">
             <!-- Card decorative elements -->
@@ -46,7 +47,7 @@
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-4xl font-black text-gray-800">
+                    <h1 class="text-2xl sm:text-4xl font-black text-gray-800">
                         Change <span class="text-[#ea5a47]">Password</span>
                     </h1>
                     <p class="text-gray-500 mt-1">Secure your account with a new password</p>
@@ -260,3 +261,4 @@ function togglePassword(inputId, button) {
         animation: slideDown 0.3s ease-out;
     }
 </style>
+@endsection

@@ -13,6 +13,9 @@ use App\Http\Controllers\Client\OrderController as ClientOrderController; // Ali
 use App\Http\Controllers\Admin\OrderController as AdminOrderController; // Add this for admin
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\Admin\VoucherController;
+use App\Http\Controllers\Admin\PromotionController;
+use App\Http\Controllers\Client\VoucherController as ClientVoucherController;
 use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Client\TransactionController;
@@ -29,6 +32,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthenticationController::class, 'login'])->name('login');
     Route::get('/signup', [AuthenticationController::class, 'showSignupForm'])->name('signup.form');
     Route::post('/signup', [AuthenticationController::class, 'signup'])->name('signup');
+
 });
 
 // Logout
@@ -56,6 +60,7 @@ Route::middleware(['auth.check', 'client'])->prefix('client')->name('client.')->
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/', [TransactionController::class, 'transactions'])->name('index');
         Route::get('/{transactionNumber}', [TransactionController::class, 'showTransaction'])->name('show');
+        Route::get('/{transactionNumber}/download', [TransactionController::class, 'downloadReceipt'])->name('download');
     });
 
     // Cart Routes
@@ -68,14 +73,26 @@ Route::middleware(['auth.check', 'client'])->prefix('client')->name('client.')->
     });
 
 
-    // Checkout routes 
+    // Vouchers
+    Route::get('/vouchers', [ClientVoucherController::class, 'index'])->name('vouchers.index');
+    Route::post('/vouchers/{voucher}/claim', [ClientVoucherController::class, 'claim'])->name('vouchers.claim');
+    Route::get('/vouchers/mine', [ClientVoucherController::class, 'myVouchers'])->name('vouchers.mine');
+    Route::get('/vouchers/collected', [ClientVoucherController::class, 'myCollectedHistory'])->name('vouchers.collected');
+
+    // Checkout routes
     Route::post('/checkout', [CartController::class, 'showCheckout'])->name('checkout');
+    // GET fallback: browser refresh or back-button on checkout page redirects cleanly to cart
+    Route::get('/checkout', fn() => redirect()->route('client.cart.index')
+        ->with('error', 'Your checkout session expired. Please select your items again.')
+    )->name('checkout.get');
     Route::post('/place-order', [CartController::class, 'placeOrder'])->name('place-order');
+    Route::post('/apply-discount', [CartController::class, 'applyDiscount'])->name('apply-discount');
 
     // Client Orders Routes - using ClientOrderController
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', [ClientOrderController::class, 'index'])->name('index');
         Route::get('/{orderNumber}', [ClientOrderController::class, 'show'])->name('show');
+        Route::get('/{orderNumber}/download', [ClientOrderController::class, 'downloadReceipt'])->name('download');
         Route::post('/{order}/picked-up', [ClientOrderController::class, 'markAsPickedUp'])->name('picked-up');
         Route::put('/{order}/cancel', [ClientOrderController::class, 'cancel'])->name('cancel');
         Route::get('/{order}/receipt', [ClientOrderController::class, 'showReceipt'])->name('receipt');
@@ -89,6 +106,7 @@ Route::middleware(['auth.check', 'client'])->prefix('client')->name('client.')->
         Route::get('/pending/{orderNumber}', [PaymentController::class, 'pending'])->name('pending');
         Route::get('/gcash-waiting/{order}', [PaymentController::class, 'gcashWaiting'])->name('gcash-waiting');
         Route::get('/success/{orderNumber}', [PaymentController::class, 'success'])->name('success');
+        Route::get('/receipt/{orderNumber}/download', [PaymentController::class, 'downloadReceipt'])->name('receipt.download');
         Route::get('/failed/{orderNumber}', [PaymentController::class, 'failed'])->name('failed');
         Route::get('/check-status/{order}', [PaymentController::class, 'checkStatus'])->name('check-status');
     });
@@ -99,6 +117,7 @@ Route::middleware(['auth.check', 'client'])->prefix('client')->name('client.')->
 // =============================================
 Route::middleware(['auth.check', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
     Route::get('/users', [DashboardController::class, 'users'])->name('users');
     Route::get('/profile', [AdminProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [AdminProfileController::class, 'edit'])->name('profile.edit');
@@ -106,7 +125,12 @@ Route::middleware(['auth.check', 'admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/profile/password', [AdminProfileController::class, 'changePassword'])->name('profile.password');
     Route::post('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
     Route::resource('menu-items', MenuItemController::class);
+    Route::post('menu-items/{menuItem}/toggle-stock', [MenuItemController::class, 'toggleStock'])->name('menu-items.toggle-stock');
+    Route::post('menu-items/{id}/restore', [MenuItemController::class, 'restore'])->name('menu-items.restore');
+    Route::delete('menu-items/{id}/force-delete', [MenuItemController::class, 'forceDelete'])->name('menu-items.force-delete');
     Route::resource('categories', CategoryController::class);
+    Route::post('categories/{id}/restore', [CategoryController::class, 'restore'])->name('categories.restore');
+    Route::delete('categories/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('categories.force-delete');
 
     // ==================== ADMIN ORDER ROUTES ====================
     // Orders list with tabs
@@ -134,6 +158,7 @@ Route::middleware(['auth.check', 'admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/transactions', [AdminTransactionController::class, 'transactions'])->name('orders.transactions');
    
     Route::get('/transactions/{transactionNumber}', [AdminTransactionController::class, 'showTransaction'])->name('transactions.show');
+    Route::post('/transactions/{transaction}/refund', [AdminTransactionController::class, 'refund'])->name('transactions.refund');
     
     // Backward compatibility (keep old routes if needed)
     Route::post('/orders/{order}/confirm-cash', [AdminOrderController::class, 'confirmCashPayment'])->name('orders.confirm-cash');
@@ -142,9 +167,15 @@ Route::middleware(['auth.check', 'admin'])->prefix('admin')->name('admin.')->gro
     Route::post('/orders/check-updates', [AdminOrderController::class, 'checkAdminUpdates'])->name('orders.check-updates');
 
     Route::prefix('sales')->name('sales.')->group(function () {
-    Route::get('/', [SalesReportController::class, 'index'])->name('index');
-    Route::get('/export', [SalesReportController::class, 'export'])->name('export');
-});
+        Route::get('/', [SalesReportController::class, 'index'])->name('index');
+        Route::get('/export', [SalesReportController::class, 'export'])->name('export');
+    });
+
+    // Vouchers
+    Route::resource('vouchers', VoucherController::class);
+    Route::post('vouchers/{voucher}/toggle', [VoucherController::class, 'toggle'])->name('vouchers.toggle');
+
+    Route::resource('promotions', PromotionController::class)->except(['show']);
 
 });
 

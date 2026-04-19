@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -187,6 +188,24 @@ class PaymentController extends Controller
             ->firstOrFail();
 
         return view('client.payment.payment-failed', compact('order'));
+    }
+
+    /**
+     * Download PDF receipt after successful payment
+     */
+    public function downloadReceipt($orderNumber)
+    {
+        set_time_limit(120);
+
+        $order = Order::with(['items', 'payments'])
+            ->where('order_number', $orderNumber)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $pdf = Pdf::loadView('pdf.payment-receipt', compact('order'))
+            ->setPaper([0, 0, 340, 700], 'portrait');
+
+        return $pdf->download("payment-receipt-{$order->order_number}.pdf");
     }
 
     /**

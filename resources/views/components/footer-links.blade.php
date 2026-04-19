@@ -1,4 +1,4 @@
-<footer class="mt-20 bg-[#fdf7f2] border-t border-[#ea5a47]/10">
+<footer class="mt-20 bg-[#fdf7f2] border-t border-[#ea5a47]/10 relative overflow-hidden">
     <div class="mx-auto w-full max-w-screen-xl px-4 py-12 lg:py-16">
         <!-- Decorative Food Icons Background -->
         <div class="absolute left-0 opacity-5 pointer-events-none">

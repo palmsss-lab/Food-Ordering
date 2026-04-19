@@ -14,13 +14,11 @@ class CartItem extends Model
         'menu_item_id',
         'quantity',
         'price',
-        'special_instructions'
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'float',
-        'special_instructions' => 'string'
     ];
 
     protected $appends = ['subtotal'];

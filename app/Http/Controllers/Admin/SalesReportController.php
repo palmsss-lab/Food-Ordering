@@ -60,7 +60,7 @@ class SalesReportController extends Controller
                 $dateTo = Carbon::today()->endOfDay();
         }
 
-        // Get transactions for the selected period
+        // Get ALL transactions for the period (for display and full breakdown)
         $transactions = Transaction::whereBetween('transaction_date', [$dateFrom, $dateTo])
             ->with('items')
             ->orderBy('transaction_date', 'desc')
@@ -71,23 +71,38 @@ class SalesReportController extends Controller
             $transaction->items_count = $transaction->items->count();
         }
 
-        // Get Best Sellers (Most Quantity Sold)
+        // Only paid (non-refunded) transactions count as revenue
+        $paidTransactions = $transactions->where('payment_status', 'paid');
+
+        // Refunded transactions
+        $refundedTransactions = $transactions->whereIn('payment_status', ['refunded', 'partial_refund']);
+
+        $grossSales     = $transactions->whereIn('payment_status', ['paid', 'refunded', 'partial_refund'])->sum('total');
+        $totalRefunded  = $refundedTransactions->sum('refund_amount');
+        $netRevenue     = $grossSales - $totalRefunded;
+
+        // Get Best Sellers (Most Quantity Sold) — only from paid (non-refunded) transactions
         $bestSellers = $this->getBestSellers($dateFrom, $dateTo);
-        
-        // Get Top Revenue Items (Most Money Generated)
+
+        // Get Top Revenue Items (Most Money Generated) — only from paid transactions
         $topRevenue = $this->getTopRevenueItems($dateFrom, $dateTo);
 
         // Summary statistics
         $summary = [
-            'total_sales' => $transactions->sum('total'),
-            'total_transactions' => $transactions->count(),
-            'average_order' => $transactions->count() > 0 ? $transactions->avg('total') : 0,
-            'total_items' => $transactions->sum('items_count'),
+            'gross_sales'        => $grossSales,
+            'total_refunded'     => $totalRefunded,
+            'net_revenue'        => $netRevenue,
+            'total_transactions' => $paidTransactions->count(),
+            'refund_count'       => $refundedTransactions->count(),
+            'average_order'      => $paidTransactions->count() > 0 ? $paidTransactions->sum('total') / $paidTransactions->count() : 0,
+            'total_items'        => $paidTransactions->sum('items_count'),
+            // keep legacy key so existing view references don't break
+            'total_sales'        => $netRevenue,
         ];
 
-        // Payment method breakdown
-        $totalCount = $transactions->count() ?: 1;
-        $paymentBreakdown = $transactions->groupBy('payment_method')
+        // Payment method breakdown — only paid transactions
+        $totalCount = $paidTransactions->count() ?: 1;
+        $paymentBreakdown = $paidTransactions->groupBy('payment_method')
             ->map(function($group) use ($totalCount) {
                 return [
                     'count' => $group->count(),
@@ -96,49 +111,61 @@ class SalesReportController extends Controller
                 ];
             });
 
-        // Daily/Monthly breakdown for charts
+        // Daily/Monthly breakdown for charts — use net revenue per period
         $dailyBreakdown = collect();
-        if ($transactions->isNotEmpty()) {
+        if ($paidTransactions->isNotEmpty() || $refundedTransactions->isNotEmpty()) {
             $daysCount = $dateFrom->diffInDays($dateTo);
-            
+
             if ($period === 'this_year' || $period === 'last_year' || $daysCount > 60) {
                 $dailyBreakdown = $transactions->groupBy(function($txn) {
                     return $txn->transaction_date->format('Y-m');
                 })->map(function($group, $month) {
-                    $date = Carbon::parse($month . '-01');
+                    $date          = Carbon::parse($month . '-01');
+                    $paid          = $group->where('payment_status', 'paid');
+                    $refunded      = $group->whereIn('payment_status', ['refunded', 'partial_refund']);
+                    $refundAmount  = (float) $refunded->sum('refund_amount');
+                    $net           = (float) $paid->sum('total') - $refundAmount;
                     return [
-                        'date' => $month,
-                        'count' => $group->count(),
-                        'total' => $group->sum('total'),
+                        'date'           => $month,
+                        'count'          => $paid->count(),
+                        'total'          => $net,
+                        'refund_amount'  => $refundAmount,
+                        'refund_count'   => $refunded->count(),
                         'formatted_date' => $date->format('M Y'),
-                        'display_date' => $date->format('F Y'),
-                        'is_monthly' => true,
+                        'display_date'   => $date->format('F Y'),
+                        'is_monthly'     => true,
                     ];
                 })->values();
             } else {
                 $dailyBreakdown = $transactions->groupBy(function($txn) {
                     return $txn->transaction_date->format('Y-m-d');
                 })->map(function($group, $date) {
+                    $paid          = $group->where('payment_status', 'paid');
+                    $refunded      = $group->whereIn('payment_status', ['refunded', 'partial_refund']);
+                    $refundAmount  = (float) $refunded->sum('refund_amount');
+                    $net           = (float) $paid->sum('total') - $refundAmount;
                     return [
-                        'date' => $date,
-                        'count' => $group->count(),
-                        'total' => $group->sum('total'),
+                        'date'           => $date,
+                        'count'          => $paid->count(),
+                        'total'          => $net,
+                        'refund_amount'  => $refundAmount,
+                        'refund_count'   => $refunded->count(),
                         'formatted_date' => Carbon::parse($date)->format('M d'),
-                        'display_date' => Carbon::parse($date)->format('F j, Y'),
-                        'is_monthly' => false,
+                        'display_date'   => Carbon::parse($date)->format('F j, Y'),
+                        'is_monthly'     => false,
                     ];
                 })->values();
             }
         }
 
-        // Hourly breakdown
+        // Hourly breakdown — paid only
         $hourlyBreakdown = collect();
-        if (in_array($period, ['today', 'yesterday']) && $transactions->isNotEmpty()) {
-            $hourlyBreakdown = $transactions->groupBy(function($txn) {
+        if (in_array($period, ['today', 'yesterday']) && $paidTransactions->isNotEmpty()) {
+            $hourlyBreakdown = $paidTransactions->groupBy(function($txn) {
                 return $txn->transaction_date->format('H');
             })->map(function($group, $hour) {
                 return [
-                    'hour' => (int)$hour,
+                    'hour'  => (int)$hour,
                     'count' => $group->count(),
                     'total' => $group->sum('total'),
                     'label' => $hour . ':00',
@@ -186,7 +213,8 @@ class SalesReportController extends Controller
                 DB::raw('COUNT(DISTINCT transaction_id) as order_count')
             )
             ->whereHas('transaction', function($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('transaction_date', [$dateFrom, $dateTo]);
+                $query->whereBetween('transaction_date', [$dateFrom, $dateTo])
+                      ->where('payment_status', 'paid'); // exclude refunded orders
             })
             ->groupBy('item_name')
             ->orderBy('total_quantity', 'desc')
@@ -195,7 +223,7 @@ class SalesReportController extends Controller
     }
 
     /**
-     * Get top revenue items (most money generated)
+     * Get top revenue items (most money generated) — excludes refunded transactions
      */
     private function getTopRevenueItems($dateFrom, $dateTo)
     {
@@ -206,7 +234,8 @@ class SalesReportController extends Controller
                 DB::raw('COUNT(DISTINCT transaction_id) as order_count')
             )
             ->whereHas('transaction', function($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('transaction_date', [$dateFrom, $dateTo]);
+                $query->whereBetween('transaction_date', [$dateFrom, $dateTo])
+                      ->where('payment_status', 'paid'); // exclude refunded orders
             })
             ->groupBy('item_name')
             ->orderBy('total_revenue', 'desc')
@@ -228,8 +257,16 @@ class SalesReportController extends Controller
         $previousStart = $currentStart->copy()->subDays($daysDiff + 1);
         $previousEnd = $currentStart->copy()->subDay();
 
-        $currentTotal = Transaction::whereBetween('transaction_date', [$currentStart, $currentEnd])->sum('total');
-        $previousTotal = Transaction::whereBetween('transaction_date', [$previousStart, $previousEnd])->sum('total');
+        // Net revenue = paid totals - refund amounts
+        $currentTotal  = Transaction::whereBetween('transaction_date', [$currentStart, $currentEnd])
+                            ->where('payment_status', 'paid')->sum('total')
+                         - Transaction::whereBetween('transaction_date', [$currentStart, $currentEnd])
+                            ->whereIn('payment_status', ['refunded', 'partial_refund'])->sum('refund_amount');
+
+        $previousTotal = Transaction::whereBetween('transaction_date', [$previousStart, $previousEnd])
+                            ->where('payment_status', 'paid')->sum('total')
+                         - Transaction::whereBetween('transaction_date', [$previousStart, $previousEnd])
+                            ->whereIn('payment_status', ['refunded', 'partial_refund'])->sum('refund_amount');
 
         $change = $previousTotal > 0 ? (($currentTotal - $previousTotal) / $previousTotal) * 100 : 0;
         $changePercent = round(abs($change), 1);
@@ -249,6 +286,8 @@ class SalesReportController extends Controller
      */
     public function export(Request $request)
     {
+        set_time_limit(120);
+
         $period = $request->get('period', 'today');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
@@ -335,12 +374,21 @@ class SalesReportController extends Controller
             fputcsv($file, []);
             
             // ==================== SUMMARY SECTION ====================
+            $paidTxns      = $transactions->where('payment_status', 'paid');
+            $refundedTxns  = $transactions->whereIn('payment_status', ['refunded', 'partial_refund']);
+            $grossSales    = $transactions->whereIn('payment_status', ['paid', 'refunded', 'partial_refund'])->sum('total');
+            $totalRefunded = $refundedTxns->sum('refund_amount');
+            $netRevenue    = $grossSales - $totalRefunded;
+
             fputcsv($file, ['SUMMARY']);
             fputcsv($file, ['Metric', 'Value']);
-            fputcsv($file, ['Total Sales', '₱' . number_format($transactions->sum('total'), 2)]);
-            fputcsv($file, ['Total Transactions', $transactions->count()]);
-            fputcsv($file, ['Average Order Value', '₱' . number_format($transactions->avg('total') ?: 0, 2)]);
-            fputcsv($file, ['Total Items Sold', $transactions->sum('items_count')]);
+            fputcsv($file, ['Gross Sales',          '₱' . number_format($grossSales, 2)]);
+            fputcsv($file, ['Total Refunded',        '₱' . number_format($totalRefunded, 2)]);
+            fputcsv($file, ['Net Revenue',           '₱' . number_format($netRevenue, 2)]);
+            fputcsv($file, ['Paid Transactions',     $paidTxns->count()]);
+            fputcsv($file, ['Refunded Transactions', $refundedTxns->count()]);
+            fputcsv($file, ['Average Order Value',   '₱' . number_format($paidTxns->count() > 0 ? $paidTxns->sum('total') / $paidTxns->count() : 0, 2)]);
+            fputcsv($file, ['Total Items Sold',      $paidTxns->sum('items_count')]);
             fputcsv($file, []);
             
             // ==================== BEST SELLERS SECTION ====================
@@ -402,11 +450,18 @@ class SalesReportController extends Controller
                 'Customer',
                 'Items',
                 'Amount',
+                'Refunded',
                 'Payment Method',
                 'Status'
             ]);
-            
+
             foreach ($transactions as $txn) {
+                $statusLabel = match($txn->payment_status) {
+                    'paid'           => 'Paid',
+                    'refunded'       => 'Refunded',
+                    'partial_refund' => 'Partial Refund',
+                    default          => ucfirst($txn->payment_status),
+                };
                 fputcsv($file, [
                     $txn->transaction_number,
                     $txn->order_number,
@@ -415,8 +470,9 @@ class SalesReportController extends Controller
                     $txn->customer_name,
                     $txn->items_count . ' item(s)',
                     number_format($txn->total, 2),
+                    $txn->refund_amount ? number_format($txn->refund_amount, 2) : '-',
                     ucfirst($txn->payment_method),
-                    'Paid'
+                    $statusLabel,
                 ]);
             }
             

@@ -10,8 +10,34 @@ class Payment extends Model
 {
     use HasFactory;
 
-   // app/Models/Payment.php
-protected $fillable = [
+    protected static function booted(): void
+    {
+        // Whenever a payment record is saved, keep the parent order's
+        // payment_status column in sync so both tables never diverge.
+        static::saved(function (Payment $payment) {
+            $order = $payment->order;
+            if (!$order) return;
+
+            // Don't overwrite a refund/partial_refund state that was set deliberately
+            if (in_array($order->payment_status, ['refunded', 'partial_refund'])) return;
+
+            $derived = match ($payment->payment_status) {
+                'completed' => 'paid',
+                'pending'   => $payment->payment_method === 'cash' ? 'cash on pickup' : 'pending',
+                'failed'    => 'failed',
+                'refunded'  => 'refunded',
+                default     => null,
+            };
+
+            if ($derived && $order->payment_status !== $derived) {
+                $order->timestamps = false; // don't bump updated_at for this housekeeping write
+                $order->update(['payment_status' => $derived]);
+                $order->timestamps = true;
+            }
+        });
+    }
+
+   protected $fillable = [
     'payment_number',
     'order_id',
     'user_id',
@@ -32,7 +58,7 @@ protected $fillable = [
 ];
 
     protected $casts = [
-        'amount' => 'float',
+        'amount' => 'decimal:2',
         'payment_details' => 'array',
         'paid_at' => 'datetime',
         'refunded_at' => 'datetime'

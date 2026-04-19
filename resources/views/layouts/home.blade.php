@@ -10,15 +10,15 @@
 </head>
 
 
-<body class="h-screen">
+<body>
 
     <x-global-loader />
-    
-    <main class=" mx-auto">
+
+    <main>
         @yield('content')
     </main>
 
-     <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js" defer></script>
 
       @vite(['resources/js/loader-login-signup-home.js'])
 

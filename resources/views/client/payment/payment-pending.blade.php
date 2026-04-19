@@ -3,7 +3,7 @@
 @section('title', 'Cash on Pickup - Order Placed')
 
 @section('content')
-<div class="mt-25 relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
+<div class="mt-24 relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <div class="relative z-10 max-w-4xl mx-auto">
         
         <!-- Header with back button -->
@@ -19,7 +19,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
                 </svg>
             </div>
-            <h1 class="text-4xl font-black text-gray-800">Cash <span class="text-[#ea5a47]">on Pickup</span></h1>
+            <h1 class="text-2xl sm:text-4xl font-black text-gray-800">Cash <span class="text-[#ea5a47]">on Pickup</span></h1>
         </div>
 
         <!-- Main Card -->
@@ -114,13 +114,13 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                <a href="{{ route('client.orders.index', ['tab' => 'pending']) }}" 
-                   class="px-8 py-3 bg-[#ea5a47] text-white font-semibold rounded-xl hover:bg-[#c53030] transition-all">
+                <a href="{{ route('client.orders.index', ['tab' => 'pending']) }}"
+                   class="w-full sm:w-auto px-8 py-3 bg-[#ea5a47] text-white font-semibold rounded-xl hover:bg-[#c53030] transition-all text-center">
                     View My Orders
                 </a>
-                
-                <a href="{{ route('client.menu') }}" 
-                   class="px-8 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition-all">
+
+                <a href="{{ route('client.menu') }}"
+                   class="w-full sm:w-auto px-8 py-3 bg-gray-600 text-white font-semibold rounded-xl hover:bg-gray-700 transition-all text-center">
                     Continue Shopping
                 </a>
             </div>

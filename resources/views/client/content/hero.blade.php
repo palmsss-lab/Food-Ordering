@@ -7,38 +7,38 @@
 <!-- Hero Section -->
 <div class="mt-10 relative overflow-hidden bg-gradient-to-br from-[#fdf7f2] to-white">
     <!-- Decorative Food Icons Background -->
-    <div class="absolute inset-0 opacity-5">
-        <div class="absolute top-20 left-10 text-8xl">🍽️</div>
-        <div class="absolute bottom-20 right-10 text-8xl">🥘</div>
-        <div class="absolute top-40 right-20 text-6xl">🍲</div>
-        <div class="absolute bottom-40 left-20 text-6xl">🥗</div>
+    <div class="absolute inset-0 opacity-5 pointer-events-none">
+        <div class="absolute top-20 left-10 text-6xl sm:text-8xl">🍽️</div>
+        <div class="absolute bottom-20 right-10 text-6xl sm:text-8xl">🥘</div>
+        <div class="absolute top-40 right-20 text-4xl sm:text-6xl">🍲</div>
+        <div class="absolute bottom-40 left-20 text-4xl sm:text-6xl">🥗</div>
     </div>
-    
-    <div class="max-w-screen-xl mx-auto mb-70 mt-32 px-4 md:px-0 relative z-10">
-        <div class="flex flex-col md:flex-row items-center md:items-start gap-12">
-            
+
+    <div class="max-w-screen-xl mx-auto mt-24 md:mt-32 mb-16 md:mb-24 px-4 md:px-8 lg:px-4 relative z-10">
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12">
+
             <!-- Left side: text  -->
-            <div class="md:w-1/2 flex flex-col justify-center">
+            <div class="w-full md:w-1/2 flex flex-col justify-center text-center md:text-left">
                 <!-- Welcome Badge -->
-                <div class="inline-flex items-center gap-2 bg-[#ea5a47]/10 text-[#ea5a47] px-4 py-2 rounded-full text-sm font-semibold mb-6 w-max">
+                <div class="inline-flex items-center gap-2 bg-[#ea5a47]/10 text-[#ea5a47] px-4 py-2 rounded-full text-sm font-semibold mb-4 md:mb-6 w-max mx-auto md:mx-0">
                     <span class="w-2 h-2 bg-[#ea5a47] rounded-full animate-pulse"></span>
                     Welcome to 2Dine-In
                 </div>
-                
-                <h1 class="text-5xl md:text-7xl font-black text-gray-900 tracking-tight leading-tight">
+
+                <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 tracking-tight leading-tight">
                     Taste <span class="text-[#ea5a47]">Home</span>
                     <br>Like Never Before
                 </h1>
-                
-                <p class="mt-6 text-lg md:text-xl text-gray-600 leading-relaxed max-w-lg">
+
+                <p class="mt-4 md:mt-6 text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed max-w-lg mx-auto md:mx-0">
                     Experience the taste of home-cooked meals with our carefully crafted dishes.
                     From classic Filipino favorites to modern twists, we bring delicious flavors directly to your table.
                 </p>
-                
+
                 <!-- Features List -->
-                <div class="mt-8 space-y-3">
+                <div class="mt-6 md:mt-8 space-y-3 text-left">
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="bg-[#ea5a47]/10 p-2 rounded-lg">
+                        <div class="bg-[#ea5a47]/10 p-2 rounded-lg flex-shrink-0">
                             <svg class="w-5 h-5 text-[#ea5a47]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
@@ -46,7 +46,7 @@
                         <span class="font-medium">Fresh ingredients daily</span>
                     </div>
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="bg-[#ea5a47]/10 p-2 rounded-lg">
+                        <div class="bg-[#ea5a47]/10 p-2 rounded-lg flex-shrink-0">
                             <svg class="w-5 h-5 text-[#ea5a47]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -54,7 +54,7 @@
                         <span class="font-medium">Ready in 20-30 minutes</span>
                     </div>
                     <div class="flex items-center gap-3 text-gray-700">
-                        <div class="bg-[#ea5a47]/10 p-2 rounded-lg">
+                        <div class="bg-[#ea5a47]/10 p-2 rounded-lg flex-shrink-0">
                             <svg class="w-5 h-5 text-[#ea5a47]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
@@ -62,52 +62,52 @@
                         <span class="font-medium">Perfect for sharing</span>
                     </div>
                 </div>
-                
+
                 <!-- CTA Buttons -->
-                <div class="mt-10 flex flex-wrap gap-4">
-                    <a href="{{ route('client.menu') }}" 
-                       class="group bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-8 py-4 rounded-xl font-bold text-lg 
-                              hover:shadow-2xl transition-all duration-300 transform hover:scale-105 
-                              inline-flex items-center gap-3">
+                <div class="mt-8 md:mt-10 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-center md:items-start">
+                    <a href="{{ route('client.menu') }}"
+                       class="group bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg
+                              hover:shadow-2xl transition-all duration-300 transform hover:scale-105
+                              inline-flex items-center gap-3 w-full sm:w-auto justify-center">
                         <span>Explore Menu</span>
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </a>
-                    
-                    <a href="{{ route('client.about') }}" 
-                       class="bg-white text-gray-700 px-8 py-4 rounded-xl font-bold text-lg 
+
+                    <a href="{{ route('client.about') }}"
+                       class="bg-white text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg
                               border-2 border-gray-200 hover:border-[#ea5a47] hover:text-[#ea5a47]
-                              transition-all duration-300 inline-flex items-center gap-3">
+                              transition-all duration-300 inline-flex items-center gap-3 w-full sm:w-auto justify-center">
                         <span>Learn More</span>
                     </a>
                 </div>
-                
+
                 <!-- Stats -->
-                <div class="mt-12 flex items-center gap-8">
-                    <div>
-                        <div class="text-3xl font-black text-[#ea5a47]">50+</div>
-                        <div class="text-sm text-gray-500">Menu Items</div>
+                <div class="mt-8 md:mt-12 flex flex-wrap items-center gap-6 sm:gap-8 justify-center md:justify-start">
+                    <div class="text-center md:text-left">
+                        <div class="text-2xl sm:text-3xl font-black text-[#ea5a47]">50+</div>
+                        <div class="text-xs sm:text-sm text-gray-500">Menu Items</div>
                     </div>
-                    <div>
-                        <div class="text-3xl font-black text-[#ea5a47]">1000+</div>
-                        <div class="text-sm text-gray-500">Happy Customers</div>
+                    <div class="text-center md:text-left">
+                        <div class="text-2xl sm:text-3xl font-black text-[#ea5a47]">1000+</div>
+                        <div class="text-xs sm:text-sm text-gray-500">Happy Customers</div>
                     </div>
-                    <div>
-                        <div class="text-3xl font-black text-[#ea5a47]">4.8</div>
-                        <div class="text-sm text-gray-500">★ Rating</div>
+                    <div class="text-center md:text-left">
+                        <div class="text-2xl sm:text-3xl font-black text-[#ea5a47]">4.8</div>
+                        <div class="text-xs sm:text-sm text-gray-500">★ Rating</div>
                     </div>
                 </div>
             </div>
 
             <!-- Right side: Enhanced Carousel -->
-            <div class="md:w-1/2 relative">
+            <div class="w-full md:w-1/2 relative mt-8 md:mt-0">
                 <!-- Decorative Frame -->
                 <div class="absolute -inset-4 bg-gradient-to-r from-[#ea5a47] to-[#c53030] opacity-20 rounded-3xl blur-2xl"></div>
-                
+
                 <div id="default-carousel" class="relative rounded-3xl overflow-hidden shadow-2xl" data-carousel="slide">
                     <!-- Carousel wrapper -->
-                    <div class="relative h-[500px] overflow-hidden bg-[#fdf7f2]">
+                    <div class="relative h-[250px] sm:h-[350px] md:h-[500px] overflow-hidden bg-[#fdf7f2]">
                         <!-- Item 1 - Sinigang -->
                         <div class="hidden duration-700 ease-in-out" data-carousel-item>
                             <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>

@@ -5,14 +5,11 @@
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9]">
 
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
-
-            <!-- Main Content Area -->
-            <div class="p-8 mt-20">
-                <div class="max-w-2xl mx-auto">
+        <!-- Main Content Area -->
+        <div class="p-4 sm:p-8">
+            <div class="max-w-2xl mx-auto">
                     <!-- Change Password Card -->
-                    <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden">
+                    <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-5 sm:p-8 border border-white/20 relative overflow-hidden">
                         <!-- Card decorative elements -->
                         <div class="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#ea5a47] to-[#c53030] opacity-5 rounded-br-3xl"></div>
                         <div class="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-[#ea5a47] to-[#c53030] opacity-5 rounded-tl-3xl"></div>
@@ -28,7 +25,7 @@
                                 </div>
                             </div>
                             <div>
-                                <h1 class="text-4xl font-black text-gray-800">
+                                <h1 class="text-2xl sm:text-4xl font-black text-gray-800">
                                     Change <span class="text-[#ea5a47]">Password</span>
                                 </h1>
                                 <p class="text-gray-500 mt-1">Secure your admin account</p>
@@ -162,6 +159,7 @@
 
                             <div class="flex gap-4 pt-4">
                                 <button type="submit"
+                                        data-loading-text="Updating Password..."
                                         class="flex-1 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-3 px-4 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-[#c53030] hover:to-[#ea5a47] flex items-center justify-center gap-2 group">
                                     <svg class="w-5 h-5 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -181,7 +179,7 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
 
 </div>
 
