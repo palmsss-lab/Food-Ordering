@@ -61,35 +61,26 @@
         </script>
 
         {{-- Skeleton loading --}}
-        <div wire:loading wire:target="setCategory">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
-            @for($i = 0; $i < 5; $i++)
-                <div class="bg-[#fdf7f2] rounded-3xl shadow-lg overflow-hidden border-2 border-gray-100">
-
-                    {{-- Image section --}}
-                    <div class="relative bg-gradient-to-br from-[#ea5a47]/5 to-[#c53030]/5 p-6">
-                        {{-- Stock badge --}}
-                        <div class="absolute top-4 left-4 h-6 w-24 rounded-full skel"></div>
-                        {{-- Image placeholder --}}
-                        <div class="w-full h-40 rounded-2xl mx-auto border-4 border-white shadow-xl skel"></div>
+        <div wire:loading.block wire:target="setCategory"
+             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+            @for($i = 0; $i < 8; $i++)
+                <div class="bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-gray-100 animate-pulse">
+                    {{-- Image placeholder --}}
+                    <div class="relative p-6 bg-gray-50">
+                        <div class="absolute top-4 left-4 h-6 w-20 rounded-full bg-gray-200"></div>
+                        <div class="w-full h-40 rounded-2xl bg-gray-200"></div>
                     </div>
-
-                    {{-- Content section --}}
-                    <div class="p-6">
-                        {{-- Name + price row --}}
-                        <div class="flex justify-between items-start mb-4 gap-3">
-                            <div class="h-5 w-2/3 rounded-full skel"></div>
-                            <div class="h-5 w-1/4 rounded-full skel"></div>
+                    {{-- Content placeholder --}}
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3 gap-3">
+                            <div class="h-4 bg-gray-200 rounded-full w-2/3"></div>
+                            <div class="h-4 bg-gray-200 rounded-full w-1/4"></div>
                         </div>
-                        {{-- Hover hint --}}
-                        <div class="h-3 w-28 rounded-full mx-auto mb-6 skel"></div>
-                        {{-- Button --}}
-                        <div class="h-14 w-full rounded-xl skel"></div>
+                        <div class="h-3 bg-gray-200 rounded-full w-1/2 mb-5"></div>
+                        <div class="h-12 bg-gray-200 rounded-xl w-full"></div>
                     </div>
-
                 </div>
             @endfor
-        </div>
         </div>
 
         {{-- Menu Items Grid --}}
