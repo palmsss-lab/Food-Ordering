@@ -16,12 +16,13 @@ return new class extends Migration
             });
 
             // Backfill: migrate numeric string values to integer (DB-agnostic)
-            DB::table('orders')->whereNotNull('refunded_by')->each(function ($row) {
-                if (is_numeric($row->refunded_by)) {
-                    DB::table('orders')->where('id', $row->id)
-                        ->update(['refunded_by_new' => (int) $row->refunded_by]);
-                }
-            });
+            DB::table('orders')->whereNotNull('refunded_by')->orderBy('id')
+                ->each(function ($row) {
+                    if (is_numeric($row->refunded_by)) {
+                        DB::table('orders')->where('id', $row->id)
+                            ->update(['refunded_by_new' => (int) $row->refunded_by]);
+                    }
+                });
 
             Schema::table('orders', function (Blueprint $table) {
                 $table->dropColumn('refunded_by');
@@ -44,12 +45,13 @@ return new class extends Migration
                 $table->unsignedBigInteger('refunded_by_new')->nullable()->after('refunded_by');
             });
 
-            DB::table('transactions')->whereNotNull('refunded_by')->each(function ($row) {
-                if (is_numeric($row->refunded_by)) {
-                    DB::table('transactions')->where('id', $row->id)
-                        ->update(['refunded_by_new' => (int) $row->refunded_by]);
-                }
-            });
+            DB::table('transactions')->whereNotNull('refunded_by')->orderBy('id')
+                ->each(function ($row) {
+                    if (is_numeric($row->refunded_by)) {
+                        DB::table('transactions')->where('id', $row->id)
+                            ->update(['refunded_by_new' => (int) $row->refunded_by]);
+                    }
+                });
 
             Schema::table('transactions', function (Blueprint $table) {
                 $table->dropColumn('refunded_by');
@@ -73,7 +75,7 @@ return new class extends Migration
         Schema::table('transactions', function (Blueprint $table) {
             $table->string('refunded_by_old')->nullable()->after('refunded_by');
         });
-        DB::table('transactions')->whereNotNull('refunded_by')->each(function ($row) {
+        DB::table('transactions')->whereNotNull('refunded_by')->orderBy('id')->each(function ($row) {
             DB::table('transactions')->where('id', $row->id)->update(['refunded_by_old' => (string) $row->refunded_by]);
         });
         Schema::table('transactions', function (Blueprint $table) { $table->dropColumn('refunded_by'); });
@@ -83,7 +85,7 @@ return new class extends Migration
         Schema::table('orders', function (Blueprint $table) {
             $table->string('refunded_by_old')->nullable()->after('refunded_by');
         });
-        DB::table('orders')->whereNotNull('refunded_by')->each(function ($row) {
+        DB::table('orders')->whereNotNull('refunded_by')->orderBy('id')->each(function ($row) {
             DB::table('orders')->where('id', $row->id)->update(['refunded_by_old' => (string) $row->refunded_by]);
         });
         Schema::table('orders', function (Blueprint $table) { $table->dropColumn('refunded_by'); });
