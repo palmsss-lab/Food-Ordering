@@ -1,8 +1,18 @@
 #!/bin/bash
 set -e
 
+# Debug: show all paths and find PHP
+echo "PATH: $PATH"
+echo "Searching for PHP..."
+find / -name "php" -type f 2>/dev/null | head -10
+
 # Find PHP binary
-PHP=$(which php || find /nix -name "php" -type f 2>/dev/null | head -1)
+PHP=$(find / -name "php" -type f 2>/dev/null | head -1)
+
+if [ -z "$PHP" ]; then
+    echo "PHP not found!"
+    exit 1
+fi
 
 echo "Using PHP: $PHP"
 $PHP --version
