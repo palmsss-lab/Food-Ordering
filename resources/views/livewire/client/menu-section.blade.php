@@ -61,8 +61,8 @@
         </script>
 
         {{-- Skeleton loading --}}
-        <div wire:loading.block wire:target="setCategory"
-             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8 mb-6">
+        <div wire:loading.block wire:target="setCategory">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8 mb-6">
 
             @php
                 $skeletonVisibility = [
@@ -89,6 +89,7 @@
                     </div>
                 </div>
             @endforeach
+        </div>
         </div>
 
         {{-- Menu Items Grid --}}
