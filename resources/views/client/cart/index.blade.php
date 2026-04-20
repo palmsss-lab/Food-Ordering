@@ -86,7 +86,7 @@
 <form id="checkout-form" method="POST" action="{{ route('client.checkout') }}">
     @csrf
     <input type="hidden" name="selected_items" id="selected-items-input" value="">
-    <div class="max-w-6xl mx-auto mt-24 md:mt-32 px-4 pb-24 sm:pb-8">
+    <div class="max-w-6xl mx-auto mt-24 md:mt-32 px-4 pb-24 md:pb-8">
         
         <!-- Header with food icon -->
         <div class="flex items-center gap-3 mb-8">  
@@ -379,7 +379,7 @@
                         <button type="button"
                                 onclick="prepareCheckout()"
                                 id="checkout-btn"
-                                class="group hidden sm:flex w-full sm:w-auto bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-10 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="group hidden md:flex w-full md:w-auto bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white px-10 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
                             <span>Proceed to Checkout</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -403,7 +403,7 @@
 <!-- Sticky Mobile Checkout Bar (visible only on small screens when items are selected) -->
 @if(!$cartItems->isEmpty())
 <div id="sticky-checkout-bar"
-     class="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white border-t-2 border-gray-100 px-4 py-3 shadow-2xl hidden">
+     class="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t-2 border-gray-100 px-4 py-3 shadow-2xl hidden">
     <div class="flex items-center justify-between gap-3">
         <div>
             <p class="text-xs text-gray-500"><span id="sticky-count">0</span> item(s) selected</p>
