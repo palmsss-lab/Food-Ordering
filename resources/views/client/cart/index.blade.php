@@ -166,7 +166,7 @@
                                     <input type="checkbox"
                                            id="select-all-checkbox"
                                            class="w-5 h-5 rounded-lg cursor-pointer accent-white"
-                                           onchange="toggleSelectAll()">
+                                           onchange="toggleSelectAll(this)">
                                     <span class="font-semibold text-sm uppercase tracking-wider">Select All</span>
                                 </label>
                             </div>
@@ -191,7 +191,7 @@
                                 <input type="checkbox"
                                        id="select-all-checkbox-mobile"
                                        class="w-5 h-5 rounded-lg cursor-pointer accent-white"
-                                       onchange="toggleSelectAll()">
+                                       onchange="toggleSelectAll(this)">
                                 <span class="font-semibold text-sm uppercase tracking-wider">Select All</span>
                             </label>
                             <button type="button"
@@ -742,12 +742,16 @@ function confirmBulkRemove() {
         });
 }
 
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('select-all-checkbox');
-    const allCheckboxes = document.querySelectorAll('.cart-item-checkbox');
-    const isChecked = selectAllCheckbox.checked;
-    
-    allCheckboxes.forEach(checkbox => {
+function toggleSelectAll(source) {
+    const isChecked = source.checked;
+
+    // Sync both select-all checkboxes
+    ['select-all-checkbox', 'select-all-checkbox-mobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = isChecked;
+    });
+
+    document.querySelectorAll('.cart-item-checkbox').forEach(checkbox => {
         checkbox.checked = isChecked;
         if (isChecked) {
             checkbox.nextElementSibling?.classList.add('block');
@@ -757,7 +761,7 @@ function toggleSelectAll() {
             checkbox.nextElementSibling?.classList.add('hidden');
         }
     });
-    
+
     updateSelection();
 }
 
@@ -790,19 +794,25 @@ function updateSelection() {
         }
     }
     
-    // Update select all checkbox state
-    if (selectAllCheckbox) {
+    // Sync both select-all checkboxes
+    ['select-all-checkbox', 'select-all-checkbox-mobile'].forEach(id => {
+        const cb = document.getElementById(id);
+        if (!cb) return;
         if (selectedCount === totalCheckboxes && totalCheckboxes > 0) {
-            selectAllCheckbox.checked = true;
-            selectAllCheckbox.indeterminate = false;
+            cb.checked = true;
+            cb.indeterminate = false;
         } else if (selectedCount > 0) {
-            selectAllCheckbox.indeterminate = true;
-            selectAllCheckbox.checked = false;
+            cb.indeterminate = true;
+            cb.checked = false;
         } else {
-            selectAllCheckbox.checked = false;
-            selectAllCheckbox.indeterminate = false;
+            cb.checked = false;
+            cb.indeterminate = false;
         }
-    }
+    });
+
+    // Also sync delete-selected mobile button
+    const deleteMobileBtn = document.getElementById('delete-selected-btn-mobile');
+    if (deleteMobileBtn) deleteMobileBtn.disabled = selectedCount === 0;
     
     calculateGrandTotal();
 
