@@ -4,6 +4,8 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Events\OrderPlaced;
+use App\Hub\SystemHub;
 use App\Models\CartItem;
 use App\Models\MenuItem;
 use App\Models\Order;
@@ -459,10 +461,10 @@ class CartController extends Controller
                     'price' => $cartItem->price,
                     'subtotal' => $cartItem->price * $cartItem->quantity,
                 ]);
-                
-                // Decrease stock using the locked instance
-                $lockedMenuItems[$cartItem->menu_item_id]->decrement('stock', $cartItem->quantity);
             }
+
+            // Route stock deduction through the hub to MenuSpoke (runs synchronously within this transaction)
+            app(SystemHub::class)->dispatch(new OrderPlaced($order, $lockedMenuItems, $cartItems));
             
             // Handle payment based on method
             if ($request->payment_method === 'cash') {

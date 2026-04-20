@@ -3,10 +3,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\CashOrderPaid;
+use App\Events\OrderCompleted;
+use App\Hub\SystemHub;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\Transaction;
-use App\Models\TransactionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -155,38 +156,8 @@ class OrderController extends Controller
                 $latestPayment->update(['payment_status' => 'completed', 'paid_at' => now()]);
             }
 
-            $existingTransaction = Transaction::where('order_id', $order->id)->first();
-
-            if (!$existingTransaction) {
-                $transaction = Transaction::create([
-                    'transaction_number' => Transaction::generateTransactionNumber(),
-                    'order_number'       => $order->order_number,
-                    'order_id'           => $order->id,
-                    'user_id'            => $order->user_id,
-                    'customer_name'      => $order->customer_name,
-                    'customer_email'     => $order->customer_email,
-                    'customer_phone'     => $order->customer_phone,
-                    'payment_method'     => 'cash',
-                    'payment_status'     => 'paid',
-                    'subtotal'           => $order->subtotal,
-                    'tax'                => $order->tax,
-                    'total'              => $order->total,
-                    'notes'              => $order->notes,
-                    'transaction_date'   => now(),
-                    'reference_number'   => $latestPayment?->reference_number,
-                ]);
-
-                foreach ($order->items as $item) {
-                    TransactionItem::create([
-                        'transaction_id' => $transaction->id,
-                        'order_item_id'  => $item->id,
-                        'item_name'      => $item->item_name,
-                        'quantity'       => $item->quantity,
-                        'price'          => $item->price,
-                        'subtotal'       => $item->subtotal,
-                    ]);
-                }
-            }
+            // Route transaction creation through the hub to TransactionSpoke
+            app(SystemHub::class)->dispatch(new CashOrderPaid($order));
 
             DB::commit();
 
@@ -239,41 +210,9 @@ class OrderController extends Controller
                 $timestampField => now(),
             ]);
 
-            // If order is completed and NOT cash (GCash/Card), create transaction
+            // If order is completed and NOT cash (GCash/Card), route transaction creation through the hub
             if ($newStatus === 'completed' && $order->payment_method !== 'cash') {
-                $existingTransaction = Transaction::where('order_id', $order->id)->first();
-                
-                if (!$existingTransaction) {
-                    $transaction = Transaction::create([
-                        'transaction_number' => Transaction::generateTransactionNumber(),
-                        'order_number' => $order->order_number,
-                        'order_id' => $order->id,
-                        'user_id' => $order->user_id,
-                        'customer_name' => $order->customer_name,
-                        'customer_email' => $order->customer_email,
-                        'customer_phone' => $order->customer_phone,
-                        'payment_method' => $order->payment_method,
-                        'payment_status' => 'paid',
-                        'subtotal' => $order->subtotal,
-                        'tax' => $order->tax,
-                        'total' => $order->total,
-                        'notes' => $order->notes,
-                        'transaction_date' => now(),
-                        'reference_number' => $order->latestPayment?->reference_number,
-                    ]);
-
-                    // Copy order items to transaction items
-                    foreach ($order->items as $item) {
-                        TransactionItem::create([
-                            'transaction_id' => $transaction->id,
-                            'order_item_id'  => $item->id,
-                            'item_name'      => $item->item_name,
-                            'quantity'       => $item->quantity,
-                            'price'          => $item->price,
-                            'subtotal'       => $item->subtotal,
-                        ]);
-                    }
-                }
+                app(SystemHub::class)->dispatch(new OrderCompleted($order));
             }
 
             DB::commit();

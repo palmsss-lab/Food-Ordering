@@ -15,11 +15,11 @@ class OrdersList extends Component
 
     /**
      * -1 means "first render — don't dispatch anything yet".
-     * After the first render these hold the last known counts so we can
-     * fire a notification whenever a count increases.
+     * After the first render holds the last known pending count so we can
+     * fire a notification when a new order arrives.
+     * Completed count is handled by the global poller in loader-admin-home.js.
      */
-    public int $previousPendingCount   = -1;
-    public int $previousCompletedCount = -1;
+    public int $previousPendingCount = -1;
 
     public function mount(): void
     {
@@ -51,10 +51,9 @@ class OrdersList extends Component
 
         $counts = $this->getCounts();
 
-        // Dispatch notifications for meaningful count changes (skip on first render)
+        // Dispatch new-order notification only (picked-up is handled by the global poller)
         if ($this->previousPendingCount >= 0) {
-            $pendingDiff   = $counts['pending']   - $this->previousPendingCount;
-            $completedDiff = $counts['completed'] - $this->previousCompletedCount;
+            $pendingDiff = $counts['pending'] - $this->previousPendingCount;
 
             if ($pendingDiff > 0) {
                 $label = $pendingDiff === 1 ? 'new order' : "{$pendingDiff} new orders";
@@ -64,19 +63,9 @@ class OrdersList extends Component
                     pendingCount: $counts['pending']
                 );
             }
-
-            if ($completedDiff > 0) {
-                $label = $completedDiff === 1 ? '1 order has' : "{$completedDiff} orders have";
-                $this->dispatch('admin-order-toast',
-                    message: "✅ {$label} been picked up by the customer.",
-                    type: 'picked-up',
-                    completedCount: $counts['completed']
-                );
-            }
         }
 
-        $this->previousPendingCount   = $counts['pending'];
-        $this->previousCompletedCount = $counts['completed'];
+        $this->previousPendingCount = $counts['pending'];
 
         return view('livewire.admin.orders-list', compact('orders', 'counts'));
     }

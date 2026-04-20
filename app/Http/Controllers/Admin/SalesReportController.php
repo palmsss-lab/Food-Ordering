@@ -4,14 +4,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Transaction;
-use App\Models\TransactionItem;
 use App\Http\Controllers\Controller;
+use App\Spokes\SalesReportSpoke;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class SalesReportController extends Controller
 {
+    public function __construct(private SalesReportSpoke $salesReportSpoke) {}
+
     /**
      * Show sales report dashboard
      */
@@ -81,11 +82,9 @@ class SalesReportController extends Controller
         $totalRefunded  = $refundedTransactions->sum('refund_amount');
         $netRevenue     = $grossSales - $totalRefunded;
 
-        // Get Best Sellers (Most Quantity Sold) — only from paid (non-refunded) transactions
-        $bestSellers = $this->getBestSellers($dateFrom, $dateTo);
-
-        // Get Top Revenue Items (Most Money Generated) — only from paid transactions
-        $topRevenue = $this->getTopRevenueItems($dateFrom, $dateTo);
+        // Delegate to SalesReportSpoke via hub
+        $bestSellers = $this->salesReportSpoke->getBestSellers($dateFrom, $dateTo);
+        $topRevenue  = $this->salesReportSpoke->getTopRevenueItems($dateFrom, $dateTo);
 
         // Summary statistics
         $summary = [
@@ -173,8 +172,7 @@ class SalesReportController extends Controller
             })->values();
         }
 
-        // Get comparison with previous period
-        $comparison = $this->getComparisonData($period, $dateFrom, $dateTo);
+        $comparison = $this->salesReportSpoke->getComparisonData($period, $dateFrom, $dateTo);
 
         // Get recent transactions for table
         $recentTransactions = Transaction::with('items')
@@ -199,86 +197,6 @@ class SalesReportController extends Controller
             'bestSellers',
             'topRevenue'
         ));
-    }
-
-    /**
-     * Get best selling items (most quantity sold)
-     */
-    private function getBestSellers($dateFrom, $dateTo)
-    {
-        return TransactionItem::select(
-                'item_name',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(subtotal) as total_revenue'),
-                DB::raw('COUNT(DISTINCT transaction_id) as order_count')
-            )
-            ->whereHas('transaction', function($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('transaction_date', [$dateFrom, $dateTo])
-                      ->where('payment_status', 'paid'); // exclude refunded orders
-            })
-            ->groupBy('item_name')
-            ->orderBy('total_quantity', 'desc')
-            ->limit(10)
-            ->get();
-    }
-
-    /**
-     * Get top revenue items (most money generated) — excludes refunded transactions
-     */
-    private function getTopRevenueItems($dateFrom, $dateTo)
-    {
-        return TransactionItem::select(
-                'item_name',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(subtotal) as total_revenue'),
-                DB::raw('COUNT(DISTINCT transaction_id) as order_count')
-            )
-            ->whereHas('transaction', function($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('transaction_date', [$dateFrom, $dateTo])
-                      ->where('payment_status', 'paid'); // exclude refunded orders
-            })
-            ->groupBy('item_name')
-            ->orderBy('total_revenue', 'desc')
-            ->limit(10)
-            ->get();
-    }
-
-    /**
-     * Get comparison with previous period
-     */
-    private function getComparisonData($period, $currentStart, $currentEnd)
-    {
-        // Parse dates
-        $currentStart = $currentStart instanceof Carbon ? $currentStart : Carbon::parse($currentStart);
-        $currentEnd = $currentEnd instanceof Carbon ? $currentEnd : Carbon::parse($currentEnd);
-        
-        $daysDiff = $currentStart->diffInDays($currentEnd);
-
-        $previousStart = $currentStart->copy()->subDays($daysDiff + 1);
-        $previousEnd = $currentStart->copy()->subDay();
-
-        // Net revenue = paid totals - refund amounts
-        $currentTotal  = Transaction::whereBetween('transaction_date', [$currentStart, $currentEnd])
-                            ->where('payment_status', 'paid')->sum('total')
-                         - Transaction::whereBetween('transaction_date', [$currentStart, $currentEnd])
-                            ->whereIn('payment_status', ['refunded', 'partial_refund'])->sum('refund_amount');
-
-        $previousTotal = Transaction::whereBetween('transaction_date', [$previousStart, $previousEnd])
-                            ->where('payment_status', 'paid')->sum('total')
-                         - Transaction::whereBetween('transaction_date', [$previousStart, $previousEnd])
-                            ->whereIn('payment_status', ['refunded', 'partial_refund'])->sum('refund_amount');
-
-        $change = $previousTotal > 0 ? (($currentTotal - $previousTotal) / $previousTotal) * 100 : 0;
-        $changePercent = round(abs($change), 1);
-
-        return [
-            'current' => $currentTotal,
-            'previous' => $previousTotal,
-            'change' => $change,
-            'change_percent' => $changePercent,
-            'trend' => $change >= 0 ? 'up' : 'down',
-            'difference' => $currentTotal - $previousTotal,
-        ];
     }
 
     /**
@@ -342,9 +260,8 @@ class SalesReportController extends Controller
             $txn->items_count = $txn->items->count();
         }
 
-        // Get best sellers for export
-        $bestSellers = $this->getBestSellers($dateFrom, $dateTo);
-        $topRevenue = $this->getTopRevenueItems($dateFrom, $dateTo);
+        $bestSellers = $this->salesReportSpoke->getBestSellers($dateFrom, $dateTo);
+        $topRevenue  = $this->salesReportSpoke->getTopRevenueItems($dateFrom, $dateTo);
 
         // Format period name for filename
         $periodName = str_replace('_', '-', $period);

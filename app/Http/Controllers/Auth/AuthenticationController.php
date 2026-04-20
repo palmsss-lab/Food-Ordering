@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\UserRegistered;
+use App\Hub\SystemHub;
 use App\Models\User;
-use App\Http\Controllers\Controller; 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +60,9 @@ class AuthenticationController extends Controller
 
             Auth::login($user);
             $this->setUserSession($user);
+
+            // Route registration event through hub to AccountSpoke
+            app(SystemHub::class)->dispatch(new UserRegistered($user));
 
             Log::info('New user registered and logged in', [
                 'user_id' => $user->id,

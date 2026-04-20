@@ -3,6 +3,8 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Events\PaymentProcessed;
+use App\Hub\SystemHub;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
@@ -55,8 +57,9 @@ class PaymentController extends Controller
             'card_cvv' => 'required_if:payment_method,card|nullable|string|max:4',
         ]);
         
-        DB::transaction(function () use ($request, $order) {
-            // Create payment record
+        $payment = null;
+
+        DB::transaction(function () use ($request, $order, &$payment) {
             $paymentData = [
                 'order_id' => $order->id,
                 'user_id' => Auth::id(),
@@ -85,15 +88,15 @@ class PaymentController extends Controller
                 ]);
             }
 
-            Payment::create($paymentData);
+            $payment = Payment::create($paymentData);
 
-            // FIXED: Only update payment_status to 'paid'
-            // DO NOT change order_status here! It must stay 'pending'
-            $order->update([
-                'payment_status' => 'paid'
-                // order_status remains 'pending' - requires admin confirmation
-            ]);
+            $order->update(['payment_status' => 'paid']);
         });
+
+        // Route post-payment notification through the hub to PaymentSpoke
+        if ($payment) {
+            app(SystemHub::class)->dispatch(new PaymentProcessed($order, $payment));
+        }
 
         // Redirect to waiting page instead of success
         if ($request->payment_method === 'gcash') {

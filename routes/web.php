@@ -29,9 +29,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function () {
     // Regular auth
     Route::get('/login', [AuthenticationController::class, 'showLoginForm'])->name('login.form');
-    Route::post('/login', [AuthenticationController::class, 'login'])->name('login');
+    Route::post('/login', [AuthenticationController::class, 'login'])->name('login')->middleware('throttle:5,1');
     Route::get('/signup', [AuthenticationController::class, 'showSignupForm'])->name('signup.form');
-    Route::post('/signup', [AuthenticationController::class, 'signup'])->name('signup');
+    Route::post('/signup', [AuthenticationController::class, 'signup'])->name('signup')->middleware('throttle:10,1');
 
 });
 
