@@ -20,11 +20,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Install JS dependencies and build assets
 RUN npm install && npm run build
 
-# Cache Laravel config
-RUN php artisan config:cache || true
-RUN php artisan route:cache || true
-RUN php artisan view:cache || true
-
 # Set permissions
 RUN chmod -R 775 storage bootstrap/cache
 
@@ -33,7 +28,10 @@ ENV PHP_DISPLAY_ERRORS=0
 
 EXPOSE ${PORT:-8080}
 
-CMD php artisan migrate --force && \
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    php artisan migrate --force && \
     php artisan db:seed --class=AdminUserSeeder --force && \
     php artisan storage:link && \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8080}

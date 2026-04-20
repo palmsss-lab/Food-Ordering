@@ -10,73 +10,83 @@ return new class extends Migration
     public function up(): void
     {
         // orders.refunded_by: string → nullable unsignedBigInteger FK to users
-        Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedBigInteger('refunded_by_new')->nullable()->after('refunded_by');
-        });
+        if (Schema::hasColumn('orders', 'refunded_by')) {
+            Schema::table('orders', function (Blueprint $table) {
+                $table->unsignedBigInteger('refunded_by_new')->nullable()->after('refunded_by');
+            });
 
-        // Migrate existing string values (stored as user IDs) to integer
-        DB::statement('UPDATE orders SET refunded_by_new = CAST(refunded_by AS UNSIGNED) WHERE refunded_by IS NOT NULL AND refunded_by REGEXP \'^[0-9]+$\'');
+            // Backfill: migrate numeric string values to integer (DB-agnostic)
+            DB::table('orders')->whereNotNull('refunded_by')->each(function ($row) {
+                if (is_numeric($row->refunded_by)) {
+                    DB::table('orders')->where('id', $row->id)
+                        ->update(['refunded_by_new' => (int) $row->refunded_by]);
+                }
+            });
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('refunded_by');
-        });
+            Schema::table('orders', function (Blueprint $table) {
+                $table->dropColumn('refunded_by');
+            });
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->renameColumn('refunded_by_new', 'refunded_by');
-        });
+            Schema::table('orders', function (Blueprint $table) {
+                $table->renameColumn('refunded_by_new', 'refunded_by');
+            });
+        }
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->foreign('refunded_by')->references('id')->on('users')->nullOnDelete();
-        });
+        try {
+            Schema::table('orders', function (Blueprint $table) {
+                $table->foreign('refunded_by')->references('id')->on('users')->nullOnDelete();
+            });
+        } catch (\Throwable $e) {}
 
         // transactions.refunded_by: same fix
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->unsignedBigInteger('refunded_by_new')->nullable()->after('refunded_by');
-        });
+        if (Schema::hasColumn('transactions', 'refunded_by')) {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->unsignedBigInteger('refunded_by_new')->nullable()->after('refunded_by');
+            });
 
-        DB::statement('UPDATE transactions SET refunded_by_new = CAST(refunded_by AS UNSIGNED) WHERE refunded_by IS NOT NULL AND refunded_by REGEXP \'^[0-9]+$\'');
+            DB::table('transactions')->whereNotNull('refunded_by')->each(function ($row) {
+                if (is_numeric($row->refunded_by)) {
+                    DB::table('transactions')->where('id', $row->id)
+                        ->update(['refunded_by_new' => (int) $row->refunded_by]);
+                }
+            });
 
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropColumn('refunded_by');
-        });
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->dropColumn('refunded_by');
+            });
 
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->renameColumn('refunded_by_new', 'refunded_by');
-        });
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->renameColumn('refunded_by_new', 'refunded_by');
+            });
+        }
 
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->foreign('refunded_by')->references('id')->on('users')->nullOnDelete();
-        });
+        try {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->foreign('refunded_by')->references('id')->on('users')->nullOnDelete();
+            });
+        } catch (\Throwable $e) {}
     }
 
     public function down(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropForeign(['refunded_by']);
-        });
+        try { Schema::table('transactions', function (Blueprint $table) { $table->dropForeign(['refunded_by']); }); } catch (\Throwable $e) {}
         Schema::table('transactions', function (Blueprint $table) {
             $table->string('refunded_by_old')->nullable()->after('refunded_by');
         });
-        DB::statement('UPDATE transactions SET refunded_by_old = CAST(refunded_by AS CHAR) WHERE refunded_by IS NOT NULL');
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropColumn('refunded_by');
+        DB::table('transactions')->whereNotNull('refunded_by')->each(function ($row) {
+            DB::table('transactions')->where('id', $row->id)->update(['refunded_by_old' => (string) $row->refunded_by]);
         });
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->renameColumn('refunded_by_old', 'refunded_by');
-        });
+        Schema::table('transactions', function (Blueprint $table) { $table->dropColumn('refunded_by'); });
+        Schema::table('transactions', function (Blueprint $table) { $table->renameColumn('refunded_by_old', 'refunded_by'); });
 
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign(['refunded_by']);
-        });
+        try { Schema::table('orders', function (Blueprint $table) { $table->dropForeign(['refunded_by']); }); } catch (\Throwable $e) {}
         Schema::table('orders', function (Blueprint $table) {
             $table->string('refunded_by_old')->nullable()->after('refunded_by');
         });
-        DB::statement('UPDATE orders SET refunded_by_old = CAST(refunded_by AS CHAR) WHERE refunded_by IS NOT NULL');
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('refunded_by');
+        DB::table('orders')->whereNotNull('refunded_by')->each(function ($row) {
+            DB::table('orders')->where('id', $row->id)->update(['refunded_by_old' => (string) $row->refunded_by]);
         });
-        Schema::table('orders', function (Blueprint $table) {
-            $table->renameColumn('refunded_by_old', 'refunded_by');
-        });
+        Schema::table('orders', function (Blueprint $table) { $table->dropColumn('refunded_by'); });
+        Schema::table('orders', function (Blueprint $table) { $table->renameColumn('refunded_by_old', 'refunded_by'); });
     }
 };
