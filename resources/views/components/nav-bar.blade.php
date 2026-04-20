@@ -403,98 +403,94 @@
                 </a>
             </li>
 
-            <li class="border-t border-gray-100 my-1 pt-2">
-                <!-- Profile section header -->
-                <div class="flex items-center gap-3 px-4 py-2 mb-1">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#ea5a47] to-[#c53030]
-                                flex items-center justify-center text-white font-bold shrink-0">
+            {{-- Mobile Profile Accordion --}}
+            <li class="border-t border-gray-100 mt-1 pt-1">
+                <button onclick="toggleMobileProfile()" id="mobile-profile-btn"
+                        class="w-full flex items-center gap-3 py-3 px-4 rounded-xl text-[15px]
+                               text-gray-700 hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#ea5a47] to-[#c53030]
+                                flex items-center justify-center text-white font-bold text-sm shrink-0">
                         {{ substr(Auth::user()->name, 0, 1) }}
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1 text-left">
                         <p class="text-sm font-bold text-gray-800 truncate">{{ Auth::user()->name }}</p>
                         <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
                     </div>
-                </div>
-            </li>
-
-            {{-- My Profile --}}
-            <li>
-                <a href="{{ route('client.profile') }}"
-                   class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
-                          hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    <svg id="mobile-profile-chevron" class="w-4 h-4 shrink-0 transition-transform duration-200"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
-                    <span>My Profile</span>
-                </a>
-            </li>
+                </button>
 
-            {{-- Edit Profile --}}
-            <li>
-                <a href="{{ route('client.profile.edit') }}"
-                   class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
-                          hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    <span>Edit Profile</span>
-                </a>
-            </li>
-
-            {{-- Change Password --}}
-            <li>
-                <a href="{{ route('client.password.change') }}"
-                   class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
-                          hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                    </svg>
-                    <span>Change Password</span>
-                </a>
-            </li>
-
-            {{-- My Transactions --}}
-            <li>
-                <a href="{{ route('client.transactions.index') }}"
-                   class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
-                          hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    <span>My Transactions</span>
-                </a>
-            </li>
-
-            {{-- Logout --}}
-            <li class="pt-1 border-t border-gray-100 mt-1">
-                @if(session()->has('user'))
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit"
-                                class="w-full flex items-center gap-3 py-3 px-4 rounded-xl text-[15px]
-                                       text-red-600 hover:bg-red-50 transition-all cursor-pointer font-semibold">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            <span>Logout</span>
-                        </button>
-                    </form>
-                @else
-                    <a href="{{ route('login.form') }}"
-                       class="flex items-center gap-3 py-3 px-4 rounded-xl text-[15px] text-gray-700
-                              hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all font-semibold">
+                {{-- Collapsible profile links --}}
+                <div id="mobile-profile-menu" class="hidden flex-col gap-0.5 pl-2 pb-1">
+                    <a href="{{ route('client.profile') }}"
+                       class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
+                              hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
-                        <span>Login</span>
+                        <span>My Profile</span>
                     </a>
-                @endif
+
+                    <a href="{{ route('client.profile.edit') }}"
+                       class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
+                              hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        <span>Edit Profile</span>
+                    </a>
+
+                    <a href="{{ route('client.password.change') }}"
+                       class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
+                              hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span>Change Password</span>
+                    </a>
+
+                    <a href="{{ route('client.transactions.index') }}"
+                       class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
+                              hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>My Transactions</span>
+                    </a>
+
+                    <div class="border-t border-gray-100 mt-1 pt-1">
+                        @if(session()->has('user'))
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit"
+                                        class="w-full flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px]
+                                               text-red-600 hover:bg-red-50 transition-all cursor-pointer font-medium">
+                                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('login.form') }}"
+                               class="flex items-center gap-3 py-2.5 px-4 rounded-xl text-[15px] text-gray-700
+                                      hover:bg-[#ea5a47]/10 hover:text-[#ea5a47] transition-all font-medium">
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                                </svg>
+                                <span>Login</span>
+                            </a>
+                        @endif
+                    </div>
+                </div>
             </li>
 
         </ul>
@@ -533,6 +529,16 @@
         }
     });
 
+    // ── Mobile profile accordion ──
+    function toggleMobileProfile() {
+        const menu    = document.getElementById('mobile-profile-menu');
+        const chevron = document.getElementById('mobile-profile-chevron');
+        const isHidden = menu.classList.contains('hidden');
+        menu.classList.toggle('hidden', !isHidden);
+        menu.classList.toggle('flex', isHidden);
+        chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
     // ── Mobile hamburger toggle ──
     (function () {
         const btn  = document.querySelector('[data-collapse-toggle="mobile-menu"]');
@@ -543,9 +549,16 @@
             const isHidden = menu.classList.contains('hidden');
             menu.classList.toggle('hidden', !isHidden);
             btn.setAttribute('aria-expanded', String(isHidden));
+            // Reset profile accordion when hamburger closes
+            if (!isHidden) {
+                const pm = document.getElementById('mobile-profile-menu');
+                const pc = document.getElementById('mobile-profile-chevron');
+                if (pm) { pm.classList.add('hidden'); pm.classList.remove('flex'); }
+                if (pc) pc.style.transform = 'rotate(0deg)';
+            }
         });
 
-        // Close when a link inside the menu is clicked
+        // Close hamburger when a link inside the menu is clicked (but not the profile toggle button)
         menu.querySelectorAll('a, button[type="submit"]').forEach(function (el) {
             el.addEventListener('click', function () {
                 menu.classList.add('hidden');
