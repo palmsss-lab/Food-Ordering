@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\MenuItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
@@ -45,6 +46,8 @@ class CategoryController extends Controller
             'name' => $request->name,
         ]);
 
+        Cache::forget('menu_categories');
+
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category created successfully.');
     }
@@ -70,6 +73,8 @@ class CategoryController extends Controller
             'name' => $request->name,
         ]);
 
+        Cache::forget('menu_categories');
+
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category updated successfully.');
     }
@@ -84,6 +89,8 @@ class CategoryController extends Controller
         $category->menuItems()->each(fn($item) => $item->delete());
         $category->delete();
 
+        Cache::forget('menu_categories');
+
         $msg = "\"{$category->name}\" has been archived.";
         if ($itemCount > 0) {
             $msg .= " {$itemCount} menu item(s) were also archived.";
@@ -96,6 +103,8 @@ class CategoryController extends Controller
     {
         $category = Category::onlyTrashed()->findOrFail($id);
         $category->restore();
+
+        Cache::forget('menu_categories');
 
         // Cascade: restore menu items that belong to this category and are archived
         $itemCount = MenuItem::onlyTrashed()->where('categories_id', $category->id)->count();
