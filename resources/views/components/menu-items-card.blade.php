@@ -143,6 +143,104 @@
     </div>
 </div>
 
+<!-- Details Modal (mobile tap — hidden on hover-capable devices via CSS) -->
+<div id="details-modal-{{ $item->id }}"
+     class="details-modal fixed inset-0 z-50 flex items-end justify-center hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+         onclick="closeDetailsModal({{ $item->id }})"></div>
+    <div class="relative bg-white rounded-t-3xl w-full max-w-lg max-h-[80vh] flex flex-col
+                transform transition-all duration-300 translate-y-full"
+         id="details-sheet-{{ $item->id }}">
+        <!-- Handle bar -->
+        <div class="flex justify-center pt-3 pb-2 flex-shrink-0">
+            <div class="w-10 h-1.5 bg-gray-300 rounded-full"></div>
+        </div>
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pb-3 border-b border-gray-100 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                @if($item->image_path)
+                    @php $isExt = filter_var($item->image_path, FILTER_VALIDATE_URL); @endphp
+                    <img src="{{ $isExt ? $item->image_path : Storage::url($item->image_path) }}"
+                         class="w-12 h-12 object-cover rounded-xl border-2 border-gray-100 shadow-sm" alt="">
+                @endif
+                <div>
+                    <h3 class="font-bold text-gray-800 text-base leading-tight">{{ $item->name }}</h3>
+                    <p class="text-[#ea5a47] font-bold text-sm">₱{{ number_format($displayPrice, 2) }}
+                        @if($discountedPrice)<span class="text-gray-400 line-through text-xs ml-1">₱{{ number_format($item->price, 2) }}</span>@endif
+                    </p>
+                </div>
+            </div>
+            <button onclick="closeDetailsModal({{ $item->id }})"
+                    class="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <!-- Scrollable content -->
+        <div class="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+            @if($item->serving_display)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Serving Size</p>
+                    <p class="text-gray-700 text-sm">{{ $item->serving_display }}</p>
+                </div>
+            @endif
+            @if($item->description)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</p>
+                    <p class="text-gray-700 text-sm leading-relaxed">{{ $item->description }}</p>
+                </div>
+            @endif
+            @if($item->dietary_badges && count($item->dietary_badges) > 0)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Dietary</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($item->dietary_badges as $badge)
+                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {{ $badge['color'] }}">
+                                <span>{{ $badge['icon'] }}</span><span>{{ $badge['name'] }}</span>
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+            @if($item->allergen_badges && count($item->allergen_badges) > 0)
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Allergens</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($item->allergen_badges as $badge)
+                            <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full {{ $badge['color'] }}">
+                                <span>{{ $badge['icon'] }}</span><span>{{ $badge['name'] }}</span>
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+            @if($item->allergen_notes)
+                <div class="bg-yellow-50 rounded-xl p-3 border border-yellow-200">
+                    <p class="text-xs font-semibold text-yellow-700 mb-1">⚠ Important Notes</p>
+                    <p class="text-xs text-yellow-800 leading-relaxed">{{ $item->allergen_notes }}</p>
+                </div>
+            @endif
+            @if(!$item->serving_display && !$item->description && (!$item->dietary_badges || count($item->dietary_badges) == 0) && (!$item->allergen_badges || count($item->allergen_badges) == 0) && !$item->allergen_notes)
+                <p class="text-center text-sm text-gray-400 py-4">No additional details available.</p>
+            @endif
+        </div>
+        <!-- Action button -->
+        @if($item->stock > 0)
+        <div class="px-5 pb-6 pt-3 border-t border-gray-100 flex-shrink-0">
+            <button onclick="closeDetailsModal({{ $item->id }}); openQuantityModal({{ $item->id }})"
+                    class="w-full bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-4 rounded-2xl
+                           flex items-center justify-center gap-2 shadow-lg">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Add to Tray
+            </button>
+        </div>
+        @endif
+    </div>
+</div>
+
 <!-- Main Card with Floating Hover Card (Clean & Minimal) -->
 <div class="relative group">
     <div class="bg-[#fdf7f2] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 
@@ -239,14 +337,24 @@
                 </div>
             </div>
             
-            <!-- Hover Hint - Simple indicator that more info is available on hover -->
+            <!-- Hint — desktop shows hover hint, touch shows tap-info button -->
             <div class="mb-4 text-center">
-                <span class="text-xs text-gray-400 group-hover:text-[#ea5a47] transition-colors flex items-center justify-center gap-1">
+                {{-- Shown on hover-capable devices only --}}
+                <span class="hover-hint text-xs text-gray-400 group-hover:text-[#ea5a47] transition-colors items-center justify-center gap-1">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Hover for details
                 </span>
+                {{-- Shown on touch devices only --}}
+                <button onclick="openDetailsModal({{ $item->id }})"
+                        class="touch-info-btn hidden items-center justify-center gap-1.5 text-xs text-[#ea5a47] font-medium
+                               bg-[#ea5a47]/10 px-3 py-1.5 rounded-full mx-auto">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Tap for details
+                </button>
             </div>
             
             <!-- Add to Tray Button -->
@@ -644,8 +752,37 @@
                 const id = modal.id.replace('quantity-modal-', '');
                 closeQuantityModal(id);
             });
+            document.querySelectorAll('.details-modal:not(.hidden)').forEach(modal => {
+                const id = modal.id.replace('details-modal-', '');
+                closeDetailsModal(id);
+            });
         }
     });
+
+    // ============ DETAILS MODAL (touch devices) ============
+    function openDetailsModal(itemId) {
+        const modal = document.getElementById(`details-modal-${itemId}`);
+        const sheet = document.getElementById(`details-sheet-${itemId}`);
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+            sheet.classList.remove('translate-y-full');
+            sheet.classList.add('translate-y-0');
+        });
+    }
+
+    function closeDetailsModal(itemId) {
+        const modal = document.getElementById(`details-modal-${itemId}`);
+        const sheet = document.getElementById(`details-sheet-${itemId}`);
+        if (!modal) return;
+        sheet.classList.remove('translate-y-0');
+        sheet.classList.add('translate-y-full');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
 </script>
 
 <style>
@@ -699,5 +836,20 @@
     
     .group:hover .group-hover\:opacity-100 {
         transition-delay: 0.1s;
+    }
+
+    /* Hover-capable devices: show hover hint, hide touch button & details modal */
+    @media (hover: hover) and (pointer: fine) {
+        .hover-hint      { display: inline-flex; }
+        .touch-info-btn  { display: none !important; }
+        .details-modal   { display: none !important; }
+    }
+
+    /* Touch / no-hover devices: hide hover card & hint, show touch button */
+    @media (hover: none), (pointer: coarse) {
+        .hover-hint { display: none !important; }
+        .touch-info-btn { display: inline-flex; }
+        /* Suppress the floating side-card on touch */
+        .group > div.absolute.top-1\/2.left-full { display: none !important; }
     }
 </style>
