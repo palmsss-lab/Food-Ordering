@@ -8,17 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cart_items', function (Blueprint $table) {
-            $table->dropColumn('special_instructions');
-        });
+        if (Schema::hasColumn('cart_items', 'special_instructions')) {
+            Schema::table('cart_items', function (Blueprint $table) {
+                $table->dropColumn('special_instructions');
+            });
+        }
 
-        Schema::table('order_items', function (Blueprint $table) {
-            $table->dropColumn('special_instructions');
-        });
+        if (Schema::hasColumn('order_items', 'special_instructions')) {
+            Schema::table('order_items', function (Blueprint $table) {
+                $table->dropColumn('special_instructions');
+            });
+        }
 
-        Schema::table('transaction_items', function (Blueprint $table) {
-            $table->dropColumn('special_instructions');
-        });
+        if (Schema::hasColumn('transaction_items', 'special_instructions')) {
+            Schema::table('transaction_items', function (Blueprint $table) {
+                $table->dropColumn('special_instructions');
+            });
+        }
     }
 
     public function down(): void

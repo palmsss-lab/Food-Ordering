@@ -9,9 +9,17 @@ return new class extends Migration
     public function up()
     {
         Schema::table('menu_items', function (Blueprint $table) {
-            // Option A: Replace separate fields with a single text field
-            $table->dropColumn(['serving_size', 'serving_unit']);
-            $table->string('serving_size')->nullable()->after('description');
+            if (Schema::hasColumn('menu_items', 'serving_unit')) {
+                $table->dropColumn('serving_unit');
+            }
+            if (Schema::hasColumn('menu_items', 'serving_size')) {
+                $table->dropColumn('serving_size');
+            }
+        });
+        Schema::table('menu_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('menu_items', 'serving_size')) {
+                $table->string('serving_size')->nullable()->after('description');
+            }
             
             // OR Option B: Keep both but make serving_unit nullable and add new field
             // $table->string('serving_size_text')->nullable()->after('serving_unit');
