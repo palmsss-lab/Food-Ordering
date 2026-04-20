@@ -133,7 +133,7 @@
                 <button onclick="addToCartWithQuantity({{ $item->id }})" 
                         class="flex-1 px-6 py-3 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-semibold rounded-xl hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
                         id="modal-add-btn-{{ $item->id }}">
-                    <span>Add to Order</span>
+                    <span>Add to Tray</span>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
@@ -249,7 +249,7 @@
                 </span>
             </div>
             
-            <!-- Add to Order Button -->
+            <!-- Add to Tray Button -->
             <button 
                 type="button"
                 data-id="{{ $item->id }}"
@@ -278,7 +278,7 @@
                 </svg>
 
                 <span class="btn-text text-lg font-semibold">
-                    {{ $item->stock > 0 ? 'Add to Order' : 'Out of Stock' }}
+                    {{ $item->stock > 0 ? 'Add to Tray' : 'Out of Stock' }}
                 </span>
 
                 <!-- Price in Button -->
@@ -410,7 +410,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
-                    Click "Add to Order" to customize quantity
+                    Click "Add to Tray" to customize quantity
                 </p>
             </div>
         </div>
