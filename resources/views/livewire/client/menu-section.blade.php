@@ -62,15 +62,23 @@
 
         {{-- Skeleton loading --}}
         <div wire:loading.block wire:target="setCategory"
-             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
-            @for($i = 0; $i < 8; $i++)
-                <div class="bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-gray-100 animate-pulse">
-                    {{-- Image placeholder --}}
+             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8 mb-6">
+
+            @php
+                $skeletonVisibility = [
+                    '',                              // card 1 — always visible
+                    'hidden sm:block',               // card 2 — sm+
+                    'hidden md:block',               // card 3 — md+
+                    'hidden lg:block',               // card 4 — lg+
+                ];
+            @endphp
+
+            @foreach($skeletonVisibility as $visibility)
+                <div class="bg-white rounded-3xl shadow-lg overflow-hidden border-2 border-gray-100 animate-pulse {{ $visibility }}">
                     <div class="relative p-6 bg-gray-50">
                         <div class="absolute top-4 left-4 h-6 w-20 rounded-full bg-gray-200"></div>
                         <div class="w-full h-40 rounded-2xl bg-gray-200"></div>
                     </div>
-                    {{-- Content placeholder --}}
                     <div class="p-5">
                         <div class="flex justify-between items-start mb-3 gap-3">
                             <div class="h-4 bg-gray-200 rounded-full w-2/3"></div>
@@ -80,7 +88,7 @@
                         <div class="h-12 bg-gray-200 rounded-xl w-full"></div>
                     </div>
                 </div>
-            @endfor
+            @endforeach
         </div>
 
         {{-- Menu Items Grid --}}
