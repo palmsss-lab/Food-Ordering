@@ -12,7 +12,7 @@ class MenuSection extends Component
 
     public function mount(): void
     {
-        $first = Category::whereHas('menuItems')->first();
+        $first = Category::whereHas('menuItems')->orderBy('id')->first();
         $this->activeCategory = $first?->id ?? 0;
     }
 
@@ -26,7 +26,7 @@ class MenuSection extends Component
         $categories = Category::withCount('menuItems')
             ->whereHas('menuItems')
             ->with(['menuItems' => fn($q) => $q->orderBy('name')])
-            ->orderBy('name')
+            ->orderBy('id')
             ->get();
 
         if ($categories->isNotEmpty() && !$categories->contains('id', $this->activeCategory)) {
