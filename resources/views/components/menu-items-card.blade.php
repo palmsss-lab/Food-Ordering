@@ -243,7 +243,7 @@
 
 <!-- Main Card with Floating Hover Card (Clean & Minimal) -->
 <div class="relative group">
-    <div class="bg-[#fdf7f2] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 
+    <div class="bg-[#fdf7f2] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 flex flex-col
         {{ $item->stock > 0 ? 'hover:border-[#ea5a47]' : 'border-gray-200 opacity-75' }}">
         
         <!-- Image Container -->
@@ -319,7 +319,7 @@
         </div>
 
         <!-- Content Section - Clean & Minimal -->
-        <div class="p-6 {{ $item->stock < 1 ? 'opacity-60' : '' }}">
+        <div class="p-6 flex flex-col flex-1 {{ $item->stock < 1 ? 'opacity-60' : '' }}">
             <!-- Product Name and Price -->
             <div class="flex justify-between items-start mb-4">
                 <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#ea5a47] transition-colors line-clamp-2 
@@ -358,14 +358,14 @@
             </div>
             
             <!-- Add to Tray Button -->
-            <button 
+            <button
                 type="button"
                 data-id="{{ $item->id }}"
                 data-stock="{{ $item->stock }}"
                 onclick="openQuantityModal({{ $item->id }})"
                 @if($item->stock < 1) disabled @endif
-                class="add-to-cart-btn w-full inline-flex items-center justify-center gap-2 
-                    {{ $item->stock > 0 
+                class="add-to-cart-btn mt-auto w-full inline-flex items-center justify-center gap-2
+                    {{ $item->stock > 0
                         ? 'bg-gradient-to-r from-[#ea5a47] to-[#c53030] hover:from-[#c53030] hover:to-[#ea5a47] cursor-pointer' 
                         : 'bg-gray-300 cursor-not-allowed opacity-60' }}
                     text-white font-bold py-4 px-6 rounded-xl 
