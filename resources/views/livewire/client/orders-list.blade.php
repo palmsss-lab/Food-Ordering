@@ -72,7 +72,7 @@
                 </button>
             </li>
 
-            <li role="presentation">
+            <li class="mr-1" role="presentation">
                 <button wire:click="setTab('cancelled')"
                         class="inline-flex items-center gap-1.5 px-3 py-3 sm:px-4 sm:py-4 rounded-t-lg border-b-2 whitespace-nowrap {{ $activeTab === 'cancelled' ? 'border-[#ea5a47] text-[#ea5a47]' : 'border-transparent hover:text-gray-600 hover:border-gray-300' }}"
                         type="button" role="tab" aria-selected="{{ $activeTab === 'cancelled' ? 'true' : 'false' }}">
@@ -82,6 +82,20 @@
                     <span>Cancelled</span>
                     @if($counts['cancelled'] > 0)
                         <span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full text-xs font-bold">{{ $counts['cancelled'] }}</span>
+                    @endif
+                </button>
+            </li>
+
+            <li role="presentation">
+                <button wire:click="setTab('refunded')"
+                        class="inline-flex items-center gap-1.5 px-3 py-3 sm:px-4 sm:py-4 rounded-t-lg border-b-2 whitespace-nowrap {{ $activeTab === 'refunded' ? 'border-[#ea5a47] text-[#ea5a47]' : 'border-transparent hover:text-gray-600 hover:border-gray-300' }}"
+                        type="button" role="tab" aria-selected="{{ $activeTab === 'refunded' ? 'true' : 'false' }}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                    <span>Refunded</span>
+                    @if($counts['refunded'] > 0)
+                        <span class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-xs font-bold">{{ $counts['refunded'] }}</span>
                     @endif
                 </button>
             </li>
@@ -153,6 +167,7 @@
                          @elseif($activeTab === 'ready')  border-green-200
                          @elseif($activeTab === 'completed') border-gray-200
                          @elseif($activeTab === 'cancelled') border-red-200
+                         @elseif($activeTab === 'refunded')  border-purple-200
                          @endif">
 
                     <div class="flex flex-col lg:flex-row justify-between items-start gap-6">
@@ -193,6 +208,8 @@
                                     @endif
                                 @elseif($activeTab === 'cancelled')
                                     <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">✕ Cancelled</span>
+                                @elseif($activeTab === 'refunded')
+                                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">↩ {{ $order->payment_status === 'partial_refund' ? 'Partially Refunded' : 'Refunded' }}</span>
                                 @endif
                             </div>
 
@@ -235,6 +252,30 @@
                                             <p class="text-sm font-semibold text-red-800">Order Rejection Reason:</p>
                                             <p class="text-sm text-red-700 mt-1">{{ $order->rejection_reason }}</p>
                                             <p class="text-xs text-red-600 mt-2">If you have questions, please contact our support team.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($activeTab === 'refunded')
+                                <div class="mt-3 p-3 bg-purple-50 border-l-4 border-purple-400 rounded-lg">
+                                    <div class="flex items-start gap-2">
+                                        <svg class="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-semibold text-purple-800">
+                                                {{ $order->payment_status === 'partial_refund' ? 'Partial Refund Issued' : 'Refund Issued' }}
+                                                @if($order->refund_amount)
+                                                    — <span class="text-purple-700">₱{{ number_format($order->refund_amount, 2) }}</span>
+                                                @endif
+                                            </p>
+                                            @if($order->refund_reason)
+                                                <p class="text-sm text-purple-700 mt-1">{{ $order->refund_reason }}</p>
+                                            @endif
+                                            @if($order->refunded_at)
+                                                <p class="text-xs text-purple-500 mt-1">Processed on {{ \Carbon\Carbon::parse($order->refunded_at)->timezone('Asia/Manila')->format('M d, Y \a\t h:i A') }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
