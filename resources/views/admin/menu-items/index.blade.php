@@ -3,7 +3,7 @@
 @section('title', 'Menu Items')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <!-- Decorative Background Elements (keep existing) -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-20 -right-20 w-96 h-96 bg-[#ea5a47] opacity-5 rounded-full blur-3xl"></div>
@@ -177,16 +177,16 @@
             <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#ea5a47] to-[#c53030] opacity-5 rounded-bl-3xl"></div>
             
             <div class="relative z-10 overflow-x-auto">
-                <table class="w-full min-w-[800px] text-sm text-left text-gray-700">
+                <table class="w-full min-w-[480px] text-sm text-left text-gray-700">
                     <thead class="text-xs uppercase bg-gray-50/80 border-b-2 border-gray-200">
                         <tr>
                             <th scope="col" class="px-6 py-4">Image</th>
                             <th scope="col" class="px-6 py-4">Name</th>
-                            <th scope="col" class="px-6 py-4">Category</th>
+                            <th scope="col" class="px-6 py-4 hidden sm:table-cell">Category</th>
                             <th scope="col" class="px-6 py-4">Price</th>
                             <th scope="col" class="px-6 py-4 text-center">Stock</th>
-                            <th scope="col" class="px-4 py-4">Dietary</th>
-                            <th scope="col" class="px-4 py-4">Allergens</th>
+                            <th scope="col" class="px-4 py-4 hidden md:table-cell">Dietary</th>
+                            <th scope="col" class="px-4 py-4 hidden md:table-cell">Allergens</th>
                             <th scope="col" class="px-6 py-4">Actions</th>
                         </tr>
                     </thead>
@@ -227,7 +227,7 @@
                                     <div class="text-xs text-gray-400 mt-1">Serving: {{ $item->serving_display }}</div>
                                 @endif
                              </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 hidden sm:table-cell">
                                 <span class="px-3 py-1 bg-[#ea5a47]/10 text-[#ea5a47] text-xs font-medium rounded-full">
                                     {{ $item->category->name }}
                                 </span>
@@ -248,7 +248,7 @@
                                     {{ $status['label'] }} ({{ $item->stock }})
                                 </span>
                              </td>
-                            <td class="px-4 py-4">
+                            <td class="px-4 py-4 hidden md:table-cell">
                                 @if($item->dietary_badges && count($item->dietary_badges) > 0)
                                     <div class="flex flex-wrap gap-1 max-w-[120px]">
                                         @foreach($item->dietary_badges as $badge)
@@ -261,7 +261,7 @@
                                     <span class="text-xs text-gray-400">—</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="px-4 py-4 hidden md:table-cell">
                                 @if($item->allergen_badges && count($item->allergen_badges) > 0)
                                     <div class="flex flex-wrap gap-1 max-w-[120px]">
                                         @foreach($item->allergen_badges as $badge)

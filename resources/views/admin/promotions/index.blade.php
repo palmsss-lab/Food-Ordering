@@ -3,7 +3,7 @@
 @section('title', 'Promotions')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] py-8 px-4 sm:px-6">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <div class="relative z-10 max-w-6xl mx-auto">
 
         {{-- Header --}}
@@ -39,12 +39,12 @@
         {{-- Table --}}
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[600px] text-sm text-left text-gray-700">
+                <table class="w-full min-w-[380px] text-sm text-left text-gray-700">
                     <thead class="text-xs uppercase bg-gray-50/80 border-b-2 border-gray-200">
                         <tr>
                             <th class="px-6 py-4">Title</th>
                             <th class="px-6 py-4">Discount</th>
-                            <th class="px-6 py-4">Date Range</th>
+                            <th class="px-6 py-4 hidden sm:table-cell">Date Range</th>
                             <th class="px-6 py-4">Status</th>
                             <th class="px-6 py-4">Actions</th>
                         </tr>
@@ -67,7 +67,7 @@
                                 <span class="font-bold text-[#ea5a47] text-lg">{{ $promo->discount_percentage }}%</span>
                                 <span class="text-gray-500 text-xs ml-1">off</span>
                             </td>
-                            <td class="px-6 py-4 text-gray-600">
+                            <td class="px-6 py-4 text-gray-600 hidden sm:table-cell">
                                 <div>{{ $promo->start_date->format('M d, Y') }}</div>
                                 <div class="text-xs text-gray-400">to {{ $promo->end_date->format('M d, Y') }}</div>
                             </td>

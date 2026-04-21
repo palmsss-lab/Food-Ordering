@@ -3,7 +3,7 @@
 @section('title', 'Admin - Change Password')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9]">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden">
 
         <!-- Main Content Area -->
         <div class="p-4 sm:p-8">

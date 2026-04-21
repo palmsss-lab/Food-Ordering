@@ -132,17 +132,17 @@
         {{-- Transactions Table --}}
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 relative overflow-hidden">
             <div class="relative z-10 overflow-x-auto">
-                <table class="w-full min-w-[800px] text-sm text-left text-gray-700">
+                <table class="w-full min-w-[480px] text-sm text-left text-gray-700">
                     <thead class="text-xs uppercase bg-gray-50/80 border-b-2 border-gray-200 sticky top-0 z-10">
                         <tr>
                             <th class="px-5 py-4 bg-gray-50/95">Transaction #</th>
-                            <th class="px-5 py-4 bg-gray-50/95">Order #</th>
+                            <th class="px-5 py-4 bg-gray-50/95 hidden sm:table-cell">Order #</th>
                             <th class="px-5 py-4 bg-gray-50/95">Customer</th>
-                            <th class="px-5 py-4 bg-gray-50/95">Items</th>
+                            <th class="px-5 py-4 bg-gray-50/95 hidden sm:table-cell">Items</th>
                             <th class="px-5 py-4 bg-gray-50/95">Total</th>
-                            <th class="px-5 py-4 bg-gray-50/95">Method</th>
+                            <th class="px-5 py-4 bg-gray-50/95 hidden sm:table-cell">Method</th>
                             <th class="px-5 py-4 bg-gray-50/95">Status</th>
-                            <th class="px-5 py-4 bg-gray-50/95">Date</th>
+                            <th class="px-5 py-4 bg-gray-50/95 hidden sm:table-cell">Date</th>
                             <th class="px-5 py-4 bg-gray-50/95">Actions</th>
                         </tr>
                     </thead>
@@ -152,7 +152,7 @@
                             <td class="px-5 py-4 font-mono text-sm font-bold text-[#ea5a47] whitespace-nowrap">
                                 {{ $transaction->transaction_number }}
                             </td>
-                            <td class="px-5 py-4 font-mono text-sm text-gray-600 whitespace-nowrap">
+                            <td class="px-5 py-4 font-mono text-sm text-gray-600 whitespace-nowrap hidden sm:table-cell">
                                 {{ $transaction->order_number }}
                             </td>
                             <td class="px-5 py-4">
@@ -161,7 +161,7 @@
                                     <div class="text-xs text-gray-500">{{ $transaction->customer_phone }}</div>
                                 @endif
                             </td>
-                            <td class="px-5 py-4">
+                            <td class="px-5 py-4 hidden sm:table-cell">
                                 <div class="text-sm">{{ $transaction->items->count() }} item(s)</div>
                                 <div class="text-xs text-gray-400 truncate max-w-[160px]">
                                     {{ $transaction->items->pluck('item_name')->implode(', ') }}
@@ -175,7 +175,7 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-5 py-4">
+                            <td class="px-5 py-4 hidden sm:table-cell">
                                 @if($transaction->payment_method === 'cash')
                                     <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium whitespace-nowrap">💵 Cash</span>
                                 @elseif($transaction->payment_method === 'gcash')
@@ -197,7 +197,7 @@
                                     <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold whitespace-nowrap">{{ ucfirst($transaction->payment_status) }}</span>
                                 @endif
                             </td>
-                            <td class="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">
+                            <td class="px-5 py-4 text-xs text-gray-500 whitespace-nowrap hidden sm:table-cell">
                                 @if($transaction->transaction_date)
                                     {{ $transaction->transaction_date->format('M d, Y') }}
                                     <div class="text-gray-400">{{ $transaction->transaction_date->format('h:i A') }}</div>

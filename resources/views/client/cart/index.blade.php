@@ -156,8 +156,7 @@
                 @endif
 
                 <!-- Cart Items Container -->
-                <div class="overflow-x-auto rounded-3xl shadow-xl">
-                <div class="bg-[#fdf7f2] min-w-[640px] overflow-hidden rounded-3xl">
+                <div class="bg-[#fdf7f2] overflow-hidden rounded-3xl shadow-xl">
                     <!-- Header Bar with Select All -->
                     <div class="bg-[#ea5a47] text-white px-6 py-4">
                         <div class="hidden sm:grid grid-cols-12 gap-4 items-center">
@@ -219,30 +218,28 @@
                             $discountedPrice   = $cartPromo ? round($item->price * (1 - $cartPromoPercent / 100), 2) : null;
                             $effectivePrice    = $discountedPrice ?? $item->price;
                         @endphp
-                        <div class="cart-item border-b border-gray-200 last:border-b-0 hover:bg-white/50 transition-colors"
+                        <div class="cart-item border-b border-gray-200 last:border-b-0"
                              data-id="{{ $item->id }}"
                              data-menu-item-id="{{ $menuItem->id }}"
                              data-price="{{ $effectivePrice }}"
-                             data-stock="{{ $stock }}">
-                            
-                            <div class="grid grid-cols-12 gap-4 items-center px-6 py-4">
-                                <!-- LEFT SECTION - Checkbox + Image + Info -->
-                                <div class="col-span-5">
-                                    <div class="flex items-center gap-4">
-                                        <!-- Custom Checkbox -->
+                             data-stock="{{ $stock }}"
+                             data-name="{{ $menuItem->name }}">
+
+                            {{-- Mobile Card --}}
+                            <div class="sm:hidden px-4 py-3 hover:bg-white/50 transition-colors">
+                                <div class="flex gap-3 items-start">
+                                    {{-- Checkbox + Image --}}
+                                    <div class="flex flex-col items-center gap-2 flex-shrink-0">
                                         <label class="relative flex items-center cursor-pointer">
                                             <input type="checkbox"
                                                    class="cart-item-checkbox w-5 h-5 appearance-none border-2 border-gray-300 rounded-lg checked:bg-[#ea5a47] checked:border-[#ea5a47] transition-all duration-200"
                                                    data-id="{{ $item->id }}"
-                                                   onchange="updateSelection()">
+                                                   onchange="syncCheckbox(this); updateSelection()">
                                             <svg class="absolute w-4 h-4 text-white left-0.5 top-0.5 pointer-events-none hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </label>
-
-                                        <!-- Product Image -->
                                         <div class="relative">
-                                            <div class="absolute inset-0 bg-[#ea5a47] opacity-10 rounded-xl"></div>
                                             @if($menuItem->image_path)
                                                 <img src="{{ Storage::url($menuItem->image_path) }}"
                                                      class="w-16 h-16 object-cover rounded-xl border-2 border-white shadow-md"
@@ -254,9 +251,8 @@
                                                     </svg>
                                                 </div>
                                             @endif
-                                            <!-- Stock Badge -->
-                                            <span class="absolute -top-2 -right-2 px-2 py-1 text-white text-xs rounded-full" 
-                                                  style="background-color: 
+                                            <span class="absolute -top-2 -right-2 px-2 py-0.5 text-white text-xs rounded-full"
+                                                  style="background-color:
                                                     @if($stockColor == 'green') #10b981
                                                     @elseif($stockColor == 'yellow') #f59e0b
                                                     @elseif($stockColor == 'red') #ef4444
@@ -265,96 +261,152 @@
                                                 {{ $stock > 10 ? 'In stock' : $stock . ' left' }}
                                             </span>
                                         </div>
-
-                                        <!-- Product Info -->
-                                        <div>
-                                            <h2 class="font-bold text-lg text-gray-800">
-                                                {{ $menuItem->name }}
-                                            </h2>
-                                            <p class="text-xs text-gray-500 mt-1">
-                                                Stock available: <span class="font-semibold">{{ $stock }}</span>
-                                            </p>
+                                    </div>
+                                    {{-- Info --}}
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start gap-2">
+                                            <h2 class="font-bold text-gray-800 text-sm leading-snug flex-1">{{ $menuItem->name }}</h2>
+                                            <button type="button"
+                                                    onclick="showSingleDeleteModal({{ $item->id }}, this.closest('.cart-item'))"
+                                                    class="delete-btn text-gray-400 hover:text-[#ea5a47] transition-colors p-1 hover:bg-red-50 rounded-lg flex-shrink-0"
+                                                    title="Remove item">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="mt-1 text-sm">
+                                            <span class="font-semibold {{ $discountedPrice ? 'text-[#ea5a47]' : 'text-gray-700' }}">
+                                                ₱{{ number_format($effectivePrice, 2) }}
+                                            </span>
+                                            @if($discountedPrice)
+                                                <span class="text-xs text-gray-400 line-through ml-1">₱{{ number_format($item->price, 2) }}</span>
+                                            @endif
+                                            <span class="text-xs text-gray-400 ml-1">each</span>
+                                        </div>
+                                        <div class="flex items-center justify-between mt-2">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button"
+                                                    onclick="changeQuantity({{ $item->id }}, -1)"
+                                                    class="minus-btn w-8 h-8 flex items-center justify-center bg-white rounded-lg border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-base shadow-sm
+                                                           {{ $item->quantity <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                                    {{ $item->quantity <= 1 ? 'disabled' : '' }}>−</button>
+                                                <span class="font-bold text-gray-700 w-6 text-center quantity">{{ $item->quantity }}</span>
+                                                <button type="button"
+                                                    onclick="changeQuantity({{ $item->id }}, 1)"
+                                                    class="plus-btn w-8 h-8 flex items-center justify-center bg-white rounded-lg border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-base shadow-sm
+                                                           {{ $item->quantity >= $stock ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                                    {{ $item->quantity >= $stock ? 'disabled' : '' }}>+</button>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="font-bold text-[#ea5a47] subtotal">₱{{ number_format($effectivePrice * $item->quantity, 2) }}</span>
+                                                @if($discountedPrice)
+                                                    <div class="text-xs text-gray-400 line-through">₱{{ number_format($item->price * $item->quantity, 2) }}</div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Price -->
-                                <div class="col-span-2 text-center">
-                                    <span class="font-medium {{ $discountedPrice ? 'text-[#ea5a47]' : 'text-gray-700' }}">
-                                        ₱{{ number_format($effectivePrice, 2) }}
-                                    </span>
-                                    @if($discountedPrice)
-                                        <div class="text-xs text-gray-400 line-through leading-none mt-0.5">
-                                            ₱{{ number_format($item->price, 2) }}
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Quantity Controls -->
-                                <div class="col-span-2 flex items-center justify-center gap-3">
-                                    <button type="button"
-                                        onclick="changeQuantity({{ $item->id }}, -1)"
-                                        class="quantity-btn minus-btn w-10 h-10 flex items-center justify-center bg-white rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-lg shadow-sm
-                                               {{ $item->quantity <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                        {{ $item->quantity <= 1 ? 'disabled' : '' }}>
-                                        −
-                                    </button>
-
-                                    <span class="font-bold text-lg text-gray-700 w-8 text-center quantity">
-                                        {{ $item->quantity }}
-                                    </span>
-
-                                    <button type="button"
-                                        onclick="changeQuantity({{ $item->id }}, 1)"
-                                        class="quantity-btn plus-btn w-10 h-10 flex items-center justify-center bg-white rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-lg shadow-sm
-                                               {{ $item->quantity >= $stock ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                        {{ $item->quantity >= $stock ? 'disabled' : '' }}>
-                                        +
-                                    </button>
-                                </div>
-
-                                <!-- Subtotal -->
-                                <div class="col-span-2 text-center">
-                                    <span class="font-bold text-lg text-[#ea5a47] subtotal">
-                                        ₱{{ number_format($effectivePrice * $item->quantity, 2) }}
-                                    </span>
-                                    @if($discountedPrice)
-                                        <div class="text-xs text-gray-400 line-through leading-none mt-0.5">
-                                            ₱{{ number_format($item->price * $item->quantity, 2) }}
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Action column -->
-                                <div class="col-span-1 text-right">
-                                    <button type="button"
-                                            onclick="showSingleDeleteModal({{ $item->id }}, this.closest('.cart-item'))"
-                                            class="delete-btn text-gray-400 hover:text-[#ea5a47] transition-colors p-2 hover:bg-red-50 rounded-lg"
-                                            title="Remove item">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="w-6 h-6"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round"
-                                                  stroke-linejoin="round"
-                                                  stroke-width="2"
-                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </div>
+                                @if($stock <= 5 && $stock > 0)
+                                    <div class="mt-2 ml-8 text-xs text-{{ $stock <= 2 ? 'red' : 'yellow' }}-600">⚠️ Only {{ $stock }} left in stock!</div>
+                                @endif
                             </div>
-                            
-                            <!-- Low Stock Warning -->
-                            @if($stock <= 5 && $stock > 0)
-                                <div class="px-6 pb-3 text-xs text-{{ $stock <= 2 ? 'red' : 'yellow' }}-600">
-                                    ⚠️ Only {{ $stock }} left in stock!
+
+                            {{-- Desktop Row --}}
+                            <div class="hidden sm:block hover:bg-white/50 transition-colors">
+                                <div class="grid grid-cols-12 gap-4 items-center px-6 py-4">
+                                    <!-- LEFT SECTION - Checkbox + Image + Info -->
+                                    <div class="col-span-5">
+                                        <div class="flex items-center gap-4">
+                                            <label class="relative flex items-center cursor-pointer">
+                                                <input type="checkbox"
+                                                       class="cart-item-checkbox w-5 h-5 appearance-none border-2 border-gray-300 rounded-lg checked:bg-[#ea5a47] checked:border-[#ea5a47] transition-all duration-200"
+                                                       data-id="{{ $item->id }}"
+                                                       onchange="syncCheckbox(this); updateSelection()">
+                                                <svg class="absolute w-4 h-4 text-white left-0.5 top-0.5 pointer-events-none hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </label>
+                                            <div class="relative">
+                                                <div class="absolute inset-0 bg-[#ea5a47] opacity-10 rounded-xl"></div>
+                                                @if($menuItem->image_path)
+                                                    <img src="{{ Storage::url($menuItem->image_path) }}"
+                                                         class="w-16 h-16 object-cover rounded-xl border-2 border-white shadow-md"
+                                                         alt="{{ $menuItem->name }}">
+                                                @else
+                                                    <div class="w-16 h-16 bg-gray-200 rounded-xl flex items-center justify-center">
+                                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                @endif
+                                                <span class="absolute -top-2 -right-2 px-2 py-1 text-white text-xs rounded-full"
+                                                      style="background-color:
+                                                        @if($stockColor == 'green') #10b981
+                                                        @elseif($stockColor == 'yellow') #f59e0b
+                                                        @elseif($stockColor == 'red') #ef4444
+                                                        @else #6b7280
+                                                        @endif">
+                                                    {{ $stock > 10 ? 'In stock' : $stock . ' left' }}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <h2 class="font-bold text-lg text-gray-800">{{ $menuItem->name }}</h2>
+                                                <p class="text-xs text-gray-500 mt-1">Stock available: <span class="font-semibold">{{ $stock }}</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Price -->
+                                    <div class="col-span-2 text-center">
+                                        <span class="font-medium {{ $discountedPrice ? 'text-[#ea5a47]' : 'text-gray-700' }}">
+                                            ₱{{ number_format($effectivePrice, 2) }}
+                                        </span>
+                                        @if($discountedPrice)
+                                            <div class="text-xs text-gray-400 line-through leading-none mt-0.5">₱{{ number_format($item->price, 2) }}</div>
+                                        @endif
+                                    </div>
+                                    <!-- Quantity Controls -->
+                                    <div class="col-span-2 flex items-center justify-center gap-3">
+                                        <button type="button"
+                                            onclick="changeQuantity({{ $item->id }}, -1)"
+                                            class="quantity-btn minus-btn w-10 h-10 flex items-center justify-center bg-white rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-lg shadow-sm
+                                                   {{ $item->quantity <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                            {{ $item->quantity <= 1 ? 'disabled' : '' }}>−</button>
+                                        <span class="font-bold text-lg text-gray-700 w-8 text-center quantity">{{ $item->quantity }}</span>
+                                        <button type="button"
+                                            onclick="changeQuantity({{ $item->id }}, 1)"
+                                            class="quantity-btn plus-btn w-10 h-10 flex items-center justify-center bg-white rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-lg shadow-sm
+                                                   {{ $item->quantity >= $stock ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                            {{ $item->quantity >= $stock ? 'disabled' : '' }}>+</button>
+                                    </div>
+                                    <!-- Subtotal -->
+                                    <div class="col-span-2 text-center">
+                                        <span class="font-bold text-lg text-[#ea5a47] subtotal">₱{{ number_format($effectivePrice * $item->quantity, 2) }}</span>
+                                        @if($discountedPrice)
+                                            <div class="text-xs text-gray-400 line-through leading-none mt-0.5">₱{{ number_format($item->price * $item->quantity, 2) }}</div>
+                                        @endif
+                                    </div>
+                                    <!-- Action column -->
+                                    <div class="col-span-1 text-right">
+                                        <button type="button"
+                                                onclick="showSingleDeleteModal({{ $item->id }}, this.closest('.cart-item'))"
+                                                class="delete-btn text-gray-400 hover:text-[#ea5a47] transition-colors p-2 hover:bg-red-50 rounded-lg"
+                                                title="Remove item">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
-                            @endif
+                                @if($stock <= 5 && $stock > 0)
+                                    <div class="px-6 pb-3 text-xs text-{{ $stock <= 2 ? 'red' : 'yellow' }}-600">
+                                        ⚠️ Only {{ $stock }} left in stock!
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     @endforeach
                 </div>
-                </div>{{-- /overflow-x-auto --}}
 
                 <!-- Bottom Section with Selection Info -->
                 <div class="mt-8 bg-white rounded-2xl shadow-lg p-6 border-2 border-[#fdf7f2]">
@@ -534,6 +586,22 @@ function showUndoToast(menuItemId) {
     });
 }
 
+function syncCheckbox(source) {
+    const id = source.getAttribute('data-id');
+    const isChecked = source.checked;
+    document.querySelectorAll(`.cart-item-checkbox[data-id="${id}"]`).forEach(cb => {
+        if (cb === source) return;
+        cb.checked = isChecked;
+        if (isChecked) {
+            cb.nextElementSibling?.classList.add('block');
+            cb.nextElementSibling?.classList.remove('hidden');
+        } else {
+            cb.nextElementSibling?.classList.remove('block');
+            cb.nextElementSibling?.classList.add('hidden');
+        }
+    });
+}
+
 function showSingleDeleteModal(itemId, element) {
     bulkDeleteMode = false;
     currentItemId = itemId;
@@ -541,8 +609,8 @@ function showSingleDeleteModal(itemId, element) {
     currentMenuItemId = element.getAttribute('data-menu-item-id') || null;
 
     // Get item details
-    const itemTitle = element.querySelector('.font-bold.text-lg.text-gray-800')?.textContent?.trim() || 'Item';
-    const itemPrice = element.querySelector('.font-medium.text-gray-700')?.textContent || '₱0.00';
+    const itemTitle = element.getAttribute('data-name') || element.querySelector('h2')?.textContent?.trim() || 'Item';
+    const itemPrice = element.querySelector('.subtotal')?.textContent || '₱0.00';
     const itemImage = element.querySelector('img')?.src || '';
     
     document.getElementById('modal-title').textContent = 'Remove Item?';
@@ -571,9 +639,13 @@ function showBulkDeleteModal() {
     
     bulkDeleteMode = true;
     selectedItemsToDelete = [];
+    const seenIds = new Set();
     selectedCheckboxes.forEach(checkbox => {
+        const id = checkbox.getAttribute('data-id');
+        if (seenIds.has(id)) return;
+        seenIds.add(id);
         selectedItemsToDelete.push({
-            id: checkbox.getAttribute('data-id'),
+            id,
             element: checkbox.closest('.cart-item')
         });
     });
@@ -766,12 +838,16 @@ function toggleSelectAll(source) {
 }
 
 function updateSelection() {
-    const selectedCheckboxes = document.querySelectorAll('.cart-item-checkbox:checked');
-    const selectedCount = selectedCheckboxes.length;
+    const cartItemEls = document.querySelectorAll('.cart-item');
+    let selectedCount = 0;
+    const totalCheckboxes = cartItemEls.length;
+    cartItemEls.forEach(item => {
+        const cb = item.querySelector('.cart-item-checkbox');
+        if (cb && cb.checked) selectedCount++;
+    });
     const deleteSelectedBtn = document.getElementById('delete-selected-btn');
     const checkoutBtn = document.getElementById('checkout-btn');
     const selectAllCheckbox = document.getElementById('select-all-checkbox');
-    const totalCheckboxes = document.querySelectorAll('.cart-item-checkbox').length;
     
     // Update selected count display
     document.getElementById('selected-count').textContent = selectedCount;
@@ -837,13 +913,13 @@ function updateSelection() {
 function changeQuantity(itemId, change) {
     const itemElement = document.querySelector(`.cart-item[data-id="${itemId}"]`);
     if (!itemElement) return;
-    
-    const quantitySpan = itemElement.querySelector('.quantity');
-    const currentQty = parseInt(quantitySpan.textContent);
+
+    const quantitySpans = itemElement.querySelectorAll('.quantity');
+    const currentQty = parseInt(quantitySpans[0].textContent);
     const newQty = currentQty + change;
     const stock = parseInt(itemElement.dataset.stock);
     const price = parseFloat(itemElement.dataset.price);
-    
+
     if (newQty < 1) {
         showToast('Quantity cannot be less than 1', true);
         return;
@@ -852,19 +928,15 @@ function changeQuantity(itemId, change) {
         showToast(`Only ${stock} items available in stock`, true);
         return;
     }
-    
+
     const originalQty = currentQty;
     const originalSubtotal = itemElement.querySelector('.subtotal').textContent;
-    
-    const minusBtn = itemElement.querySelector('.minus-btn');
-    const plusBtn = itemElement.querySelector('.plus-btn');
-    minusBtn.disabled = true;
-    plusBtn.disabled = true;
-    
-    quantitySpan.textContent = newQty;
-    const subtotalSpan = itemElement.querySelector('.subtotal');
-    subtotalSpan.textContent = '₱' + (price * newQty).toFixed(2);
-    
+
+    itemElement.querySelectorAll('.minus-btn, .plus-btn').forEach(b => b.disabled = true);
+
+    quantitySpans.forEach(s => s.textContent = newQty);
+    itemElement.querySelectorAll('.subtotal').forEach(s => s.textContent = '₱' + (price * newQty).toFixed(2));
+
     fetch(`/client/cart/update/${itemId}`, {
         method: "PUT",
         headers: {
@@ -882,52 +954,48 @@ function changeQuantity(itemId, change) {
             showToast('Quantity updated');
             updateButtonStates(itemElement, newQty, stock);
         } else {
-            quantitySpan.textContent = originalQty;
-            subtotalSpan.textContent = originalSubtotal;
+            quantitySpans.forEach(s => s.textContent = originalQty);
+            itemElement.querySelectorAll('.subtotal').forEach(s => s.textContent = originalSubtotal);
             showToast(data.message || 'Failed to update', true);
             updateButtonStates(itemElement, originalQty, stock);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        quantitySpan.textContent = originalQty;
-        subtotalSpan.textContent = originalSubtotal;
+        quantitySpans.forEach(s => s.textContent = originalQty);
+        itemElement.querySelectorAll('.subtotal').forEach(s => s.textContent = originalSubtotal);
         showToast('Error updating quantity', true);
         updateButtonStates(itemElement, originalQty, stock);
-    })
-    .finally(() => {
-        minusBtn.disabled = false;
-        plusBtn.disabled = false;
     });
 }
 
 function updateButtonStates(itemElement, currentQty, stock) {
-    const minusBtn = itemElement.querySelector('.minus-btn');
-    const plusBtn = itemElement.querySelector('.plus-btn');
-    
-    if (currentQty <= 1) {
-        minusBtn.disabled = true;
-        minusBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    } else {
-        minusBtn.disabled = false;
-        minusBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
-    
-    if (currentQty >= stock) {
-        plusBtn.disabled = true;
-        plusBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    } else {
-        plusBtn.disabled = false;
-        plusBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
+    itemElement.querySelectorAll('.minus-btn').forEach(btn => {
+        if (currentQty <= 1) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+    itemElement.querySelectorAll('.plus-btn').forEach(btn => {
+        if (currentQty >= stock) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
 }
 
 function calculateGrandTotal() {
     let total = 0;
-    document.querySelectorAll('.cart-item-checkbox:checked').forEach(checkbox => {
-        const itemElement = checkbox.closest('.cart-item');
-        if (itemElement) {
-            const subtotalText = itemElement.querySelector('.subtotal').textContent;
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const cb = item.querySelector('.cart-item-checkbox');
+        if (cb && cb.checked) {
+            const subtotalText = item.querySelector('.subtotal').textContent;
             total += parseFloat(subtotalText.replace(/[^0-9.-]+/g, ''));
         }
     });
@@ -948,9 +1016,11 @@ function prepareCheckout() {
         return false;
     }
     
+    const seen = new Set();
     const selectedItems = [];
     selectedCheckboxes.forEach(checkbox => {
-        selectedItems.push(checkbox.getAttribute('data-id'));
+        const id = checkbox.getAttribute('data-id');
+        if (!seen.has(id)) { seen.add(id); selectedItems.push(id); }
     });
     
     const selectedItemsInput = document.getElementById('selected-items-input');

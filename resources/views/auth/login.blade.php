@@ -106,17 +106,11 @@
             <!-- Divider -->
 
             <div class="text-center mt-6 pt-4 border-t border-gray-100">
-                <p class="text-gray-600">
-                    Don't have an account?
-                    <a href="{{ route('signup.form') }}" class="text-[#ea5a47] font-semibold hover:text-[#c53030] transition-colors hover:underline">
-                        Sign up here
-                    </a>
-                </p>
-            </div>
-
-            <div class="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
-                <p class="font-medium mb-1">Demo Credentials:</p>
-                <p>Username: admin / Password: admin123</p>
+                <p class="text-gray-600 mb-2">Don't have an account?</p>
+                <a href="{{ route('signup.form') }}"
+                   class="inline-flex items-center justify-center gap-1 text-[#ea5a47] font-semibold hover:text-[#c53030] transition-colors py-2 px-4 rounded-lg hover:bg-[#ea5a47]/5 min-h-[44px]">
+                    Sign up here
+                </a>
             </div>
         </div>
     </div>

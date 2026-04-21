@@ -3,7 +3,8 @@
 @section('title', 'Admin Dashboard')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] p-4 sm:p-6 lg:p-8 overflow-y-auto" style="max-height:100vh;">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
+<div class="relative z-10 max-w-7xl mx-auto">
 
     {{-- Top bar --}}
     <div class="flex flex-wrap justify-between items-center gap-3 mb-8">
@@ -188,6 +189,7 @@
         </div>
     </div>
 
+</div>
 </div>
 
 <script>

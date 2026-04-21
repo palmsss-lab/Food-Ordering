@@ -3,7 +3,7 @@
 @section('title', 'Add Promotion')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] py-8 px-4 sm:px-6">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <div class="relative z-10 max-w-2xl mx-auto">
 
         <div class="flex items-center gap-3 mb-6">

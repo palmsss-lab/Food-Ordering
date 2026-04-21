@@ -96,8 +96,8 @@
                 <!-- Order Items - Simple Table -->
                 <div>
                     <h3 class="font-semibold text-gray-800 text-sm mb-3">Order Items ({{ $transaction->items->count() }})</h3>
-                    <div class="border rounded-lg overflow-hidden">
-                        <table class="w-full text-sm">
+                    <div class="border rounded-lg overflow-x-auto">
+                        <table class="w-full min-w-[360px] text-sm">
                             <thead class="bg-gray-50">
                                 <tr class="border-b">
                                     <th class="px-3 py-2 text-left text-gray-600 text-xs">Item</th>

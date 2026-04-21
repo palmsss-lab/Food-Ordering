@@ -3,7 +3,7 @@
 @section('title', 'Admin - Edit Profile')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden flex items-center justify-center p-4 sm:p-6 lg:p-8">
 
         <!-- Main Content Area -->
         <div class="w-full">

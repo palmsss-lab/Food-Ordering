@@ -3,7 +3,7 @@
 @section('title', 'Registered Users')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] py-8 px-4 sm:px-6 lg:px-8">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
 
     <div class="relative z-10 max-w-7xl mx-auto">
 
@@ -27,14 +27,14 @@
         {{-- Table --}}
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[800px] text-sm text-left text-gray-700">
+                <table class="w-full min-w-[400px] text-sm text-left text-gray-700">
                     <thead class="text-xs uppercase bg-gray-50/90 border-b-2 border-gray-200 sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-4 bg-gray-50/95">User</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Email</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Phone</th>
-                            <th class="px-6 py-4 bg-gray-50/95 text-center">Total Orders</th>
-                            <th class="px-6 py-4 bg-gray-50/95">Registered</th>
+                            <th class="px-6 py-4 bg-gray-50/95 hidden sm:table-cell">Email</th>
+                            <th class="px-6 py-4 bg-gray-50/95 hidden md:table-cell">Phone</th>
+                            <th class="px-6 py-4 bg-gray-50/95 text-center hidden sm:table-cell">Total Orders</th>
+                            <th class="px-6 py-4 bg-gray-50/95 hidden md:table-cell">Registered</th>
                             <th class="px-6 py-4 bg-gray-50/95 text-center">Status</th>
                         </tr>
                     </thead>
@@ -55,7 +55,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-gray-600">
+                            <td class="px-6 py-4 text-gray-600 hidden sm:table-cell">
                                 @if($user->trashed() && $user->archivedEmail)
                                     {{ $user->archivedEmail->original_email }}
                                     <div class="text-xs text-gray-400 italic">original email</div>
@@ -63,11 +63,11 @@
                                     {{ $user->email }}
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-gray-500">{{ $user->phone ?? '—' }}</td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-6 py-4 text-gray-500 hidden md:table-cell">{{ $user->phone ?? '—' }}</td>
+                            <td class="px-6 py-4 text-center hidden sm:table-cell">
                                 <span class="font-bold text-[#ea5a47]">{{ $user->orders_count }}</span>
                             </td>
-                            <td class="px-6 py-4 text-gray-500 whitespace-nowrap">
+                            <td class="px-6 py-4 text-gray-500 whitespace-nowrap hidden md:table-cell">
                                 {{ $user->created_at->format('M d, Y') }}
                                 <div class="text-xs text-gray-400">{{ $user->created_at->diffForHumans() }}</div>
                             </td>

@@ -3,7 +3,7 @@
 @section('title', 'Add Menu')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] py-8 px-4 sm:px-6 lg:py-12">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <!-- Decorative Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-20 -right-20 w-96 h-96 bg-[#ea5a47] opacity-5 rounded-full blur-3xl"></div>
@@ -315,26 +315,24 @@
                     </div>
 
                     <!-- Form Actions (Sticky at bottom) -->
-                    <div class="sticky bottom-0 bg-white/95 backdrop-blur-sm pt-4 pb-2 -mx-8 px-8 border-t border-gray-200 mt-6">
-                        <div class="flex gap-4">
-                            <button type="submit"
-                                    id="submit-btn"
-                                    data-loading-text="Adding Menu Item..."
-                                    class="flex items-center justify-center gap-2 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-3 px-8 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-[#c53030] hover:to-[#ea5a47]">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span>Create Menu Item</span>
-                            </button>
-                            <a href="{{ route('admin.menu-items.index') }}" 
-                               id="cancel-btn"
-                               class="flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 px-8 rounded-xl hover:border-[#ea5a47] hover:bg-gray-50 transition-all duration-300">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                <span>Cancel</span>
-                            </a>
-                        </div>
+                    <div class="flex gap-4 border-t border-gray-200 mt-6 pt-4">
+                        <button type="submit"
+                                id="submit-btn"
+                                data-loading-text="Adding Menu Item..."
+                                class="flex items-center justify-center gap-2 bg-gradient-to-r from-[#ea5a47] to-[#c53030] text-white font-bold py-3 px-8 rounded-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-[#c53030] hover:to-[#ea5a47]">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Create Menu Item</span>
+                        </button>
+                        <a href="{{ route('admin.menu-items.index') }}"
+                           id="cancel-btn"
+                           class="flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 px-8 rounded-xl hover:border-[#ea5a47] hover:bg-gray-50 transition-all duration-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span>Cancel</span>
+                        </a>
                     </div>
                 </form>
             </div>

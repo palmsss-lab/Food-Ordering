@@ -204,12 +204,11 @@
             <!-- Divider -->
 
             <div class="text-center mt-6 pt-4 border-t border-gray-100">
-                <p class="text-gray-600">
-                    Already have an account?
-                    <a href="{{ route('login.form') }}" class="text-[#ea5a47] font-semibold hover:text-[#c53030] transition-colors hover:underline">
-                        Sign in here
-                    </a>
-                </p>
+                <p class="text-gray-600 mb-2">Already have an account?</p>
+                <a href="{{ route('login.form') }}"
+                   class="inline-flex items-center justify-center gap-1 text-[#ea5a47] font-semibold hover:text-[#c53030] transition-colors py-2 px-4 rounded-lg hover:bg-[#ea5a47]/5 min-h-[44px]">
+                    Sign in here
+                </a>
             </div>
         </div>
     </div>

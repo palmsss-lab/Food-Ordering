@@ -162,7 +162,7 @@
                         <div class="relative">
                             <div class="overflow-x-auto pb-8" style="max-width:100%;" id="chart-scroll-container">
                                 <div class="relative" style="min-width: {{ $dataPoints * 45 }}px;">
-                                    <div class="flex items-end gap-2" style="height: 250px;">
+                                    <div class="flex items-end gap-2" style="height: 250px; padding-top: 80px;">
                                         @foreach($dailyBreakdown as $item)
                                             @php
                                                 $refundAmt   = (float)($item['refund_amount'] ?? 0);
@@ -231,7 +231,7 @@
                             <p class="text-xs text-gray-400 text-center mt-2">← Scroll to see more →</p>
                         </div>
                     @else
-                        <div class="h-80 flex items-end justify-center gap-3">
+                        <div id="sales-chart-short" class="flex items-end justify-center gap-3" style="height: 320px; padding-top: 80px;">
                             @foreach($dailyBreakdown as $item)
                                 @php
                                     $refundAmt    = (float)($item['refund_amount'] ?? 0);
@@ -479,7 +479,7 @@
                     </div>
                     <div class="relative group">
                         <div class="overflow-x-auto pb-4" style="max-width: 100%;" id="hourly-chart-container">
-                            <div class="flex items-end gap-1" style="min-width: 1100px; height: 300px;">
+                            <div class="flex items-end gap-1" style="min-width: 1100px; height: 300px; padding-top: 80px;">
                                 @for($hour = 0; $hour < 24; $hour++)
                                     @php
                                         $hourData = $hourlyBreakdown->firstWhere('hour', $hour);
@@ -571,23 +571,23 @@
                     <p class="text-gray-500 text-center py-8">No recent transactions</p>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-[600px]">
+                        <table class="w-full min-w-[320px]">
                             <thead>
                                 <tr class="border-b border-gray-200">
                                     <th class="text-left py-3">Transaction #</th>
-                                    <th class="text-left py-3">Date</th>
-                                    <th class="text-left py-3">Customer</th>
+                                    <th class="text-left py-3 hidden sm:table-cell">Date</th>
+                                    <th class="text-left py-3 hidden sm:table-cell">Customer</th>
                                     <th class="text-right py-3">Amount</th>
                                     <th class="text-center py-3">Payment</th>
-                                    <th class="text-center py-3">Items</th>
+                                    <th class="text-center py-3 hidden sm:table-cell">Items</th>
                                  </tr>
                             </thead>
                             <tbody>
                                 @foreach($recentTransactions as $txn)
                                 <tr class="border-b border-gray-100 hover:bg-gray-50">
                                     <td class="py-3 font-mono text-sm">{{ $txn->transaction_number }}</td>
-                                    <td class="py-3 text-sm">{{ $txn->transaction_date->format('M d, h:i A') }}</td>
-                                    <td class="py-3">{{ $txn->customer_name }}</td>
+                                    <td class="py-3 text-sm hidden sm:table-cell">{{ $txn->transaction_date->format('M d, h:i A') }}</td>
+                                    <td class="py-3 hidden sm:table-cell">{{ $txn->customer_name }}</td>
                                     <td class="py-3 text-right font-medium">₱{{ number_format($txn->total, 2) }}</td>
                                     <td class="py-3 text-center">
                                         @if($txn->payment_method == 'cash')
@@ -598,7 +598,7 @@
                                             <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">Card</span>
                                         @endif
                                     </td>
-                                    <td class="py-3 text-center">{{ $txn->items_count }}</td>
+                                    <td class="py-3 text-center hidden sm:table-cell">{{ $txn->items_count }}</td>
                                  </tr>
                                 @endforeach
                             </tbody>
@@ -688,6 +688,44 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('pageshow', function() {
         isSubmitting = false;
     });
+
+    // Touch tooltips for mobile (hover doesn't fire on touch devices)
+    (function () {
+        var activeTooltip = null;
+
+        function showTooltip(tooltip) {
+            if (activeTooltip && activeTooltip !== tooltip) {
+                activeTooltip.style.opacity = '';
+            }
+            tooltip.style.opacity = '1';
+            activeTooltip = tooltip;
+        }
+
+        function hideActive() {
+            if (activeTooltip) {
+                activeTooltip.style.opacity = '';
+                activeTooltip = null;
+            }
+        }
+
+        function attachToGroups(container) {
+            if (!container) return;
+            container.querySelectorAll('.group').forEach(function (group) {
+                group.addEventListener('touchstart', function (e) {
+                    var tooltip = group.querySelector('.opacity-0');
+                    if (!tooltip) return;
+                    e.stopPropagation();
+                    activeTooltip === tooltip ? hideActive() : showTooltip(tooltip);
+                }, { passive: true });
+            });
+        }
+
+        attachToGroups(document.getElementById('chart-scroll-container'));
+        attachToGroups(document.getElementById('hourly-chart-container'));
+        attachToGroups(document.getElementById('sales-chart-short'));
+
+        document.addEventListener('touchstart', hideActive, { passive: true });
+    })();
 });
 </script>
 

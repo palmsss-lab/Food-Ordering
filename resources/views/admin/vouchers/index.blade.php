@@ -3,7 +3,7 @@
 @section('title', 'Vouchers')
 
 @section('content')
-<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] py-8 px-4 sm:px-6">
+<div class="relative min-h-screen bg-gradient-to-br from-[#fdf7f2] to-[#f5e8d9] overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
     <div class="relative z-10 max-w-6xl mx-auto">
 
         <!-- Header -->
@@ -58,15 +58,15 @@
         <!-- Table -->
         <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[700px] text-sm">
+                <table class="w-full min-w-[380px] text-sm">
                     <thead>
                         <tr class="bg-gradient-to-r from-[#ea5a47]/10 to-[#c53030]/10 border-b border-gray-100">
                             <th class="px-6 py-4 text-left font-bold text-gray-700">Code</th>
-                            <th class="px-6 py-4 text-left font-bold text-gray-700">Description</th>
+                            <th class="px-6 py-4 text-left font-bold text-gray-700 hidden md:table-cell">Description</th>
                             <th class="px-6 py-4 text-left font-bold text-gray-700">Discount</th>
-                            <th class="px-6 py-4 text-left font-bold text-gray-700">Min Order</th>
-                            <th class="px-6 py-4 text-left font-bold text-gray-700">Uses</th>
-                            <th class="px-6 py-4 text-left font-bold text-gray-700">Expires</th>
+                            <th class="px-6 py-4 text-left font-bold text-gray-700 hidden sm:table-cell">Min Order</th>
+                            <th class="px-6 py-4 text-left font-bold text-gray-700 hidden sm:table-cell">Uses</th>
+                            <th class="px-6 py-4 text-left font-bold text-gray-700 hidden sm:table-cell">Expires</th>
                             <th class="px-6 py-4 text-left font-bold text-gray-700">Status</th>
                             <th class="px-6 py-4 text-right font-bold text-gray-700">Actions</th>
                         </tr>
@@ -79,7 +79,7 @@
                                         {{ $voucher->code }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-gray-600 max-w-[180px] truncate">
+                                <td class="px-6 py-4 text-gray-600 max-w-[180px] truncate hidden md:table-cell">
                                     {{ $voucher->description ?: '—' }}
                                 </td>
                                 <td class="px-6 py-4 font-semibold text-gray-800">
@@ -89,13 +89,13 @@
                                         <span class="text-blue-600">₱{{ number_format($voucher->value, 2) }} off</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-6 py-4 text-gray-600 hidden sm:table-cell">
                                     {{ $voucher->min_order_amount ? '₱' . number_format($voucher->min_order_amount, 2) : '—' }}
                                 </td>
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-6 py-4 text-gray-600 hidden sm:table-cell">
                                     {{ $voucher->actualUsedCount() }}{{ $voucher->max_uses ? ' / ' . $voucher->max_uses : '' }}
                                 </td>
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-6 py-4 text-gray-600 hidden sm:table-cell">
                                     @if($voucher->expires_at)
                                         <span class="{{ $voucher->expires_at->isPast() ? 'text-red-500' : 'text-gray-600' }}">
                                             {{ $voucher->expires_at->format('M d, Y') }}
