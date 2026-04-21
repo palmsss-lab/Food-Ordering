@@ -236,16 +236,15 @@
                                 <span class="text-[#ea5a47] font-bold">{{ $item->formatted_price }}</span>
                              </td>
                             <td class="px-6 py-4 text-center">
-                                @php
-                                    $status = $item->stock_status;
-                                @endphp
-                                <span class="px-3 py-1 text-xs font-medium rounded-full 
-                                    @if($status['class'] === 'success') bg-green-100 text-green-700
-                                    @elseif($status['class'] === 'warning') bg-yellow-100 text-yellow-700
-                                    @elseif($status['class'] === 'danger') bg-red-100 text-red-700
-                                    @else bg-gray-100 text-gray-700
+                                @php $status = $item->stock_status; @endphp
+                                <span class="text-xs font-semibold
+                                    @if($status['class'] === 'success') text-green-600
+                                    @elseif($status['class'] === 'warning') text-yellow-600
+                                    @elseif($status['class'] === 'danger') text-red-600
+                                    @else text-gray-500
                                     @endif">
-                                    {{ $status['label'] }} ({{ $item->stock }})
+                                    {{ $status['label'] }}<br>
+                                    <span class="font-normal text-gray-500">({{ $item->stock }})</span>
                                 </span>
                              </td>
                             <td class="px-4 py-4 hidden md:table-cell">
