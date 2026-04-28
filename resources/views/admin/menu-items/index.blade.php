@@ -149,18 +149,21 @@
                                         </button>
                                     </form>
                                     {{-- Permanent Delete --}}
-                                    <form action="{{ route('admin.menu-items.force-delete', $archived->id) }}" method="POST"
-                                          onsubmit="return confirm('Permanently delete \"{{ addslashes($archived->name) }}\"? This cannot be undone.')">
+                                    <form id="force-delete-menuitem-form-{{ $archived->id }}"
+                                          action="{{ route('admin.menu-items.force-delete', $archived->id) }}"
+                                          method="POST" class="hidden">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit"
-                                                class="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
-                                                title="Permanently Delete">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
                                     </form>
+                                    <button type="button"
+                                            class="force-delete-menuitem p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                            data-id="{{ $archived->id }}"
+                                            data-name="{{ $archived->name }}"
+                                            title="Permanently Delete">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -353,6 +356,45 @@
                 </div>
             </div>
             @endif
+        </div>
+    </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal (Archive) -->
+<div id="forceDeleteMenuItemModal" class="fixed inset-0 z-[110] hidden overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
+        <div id="forceDeleteMenuItemOverlay" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl max-w-md w-full">
+            <div class="absolute top-0 left-0 right-0 h-2 rounded-t-3xl bg-gradient-to-r from-red-600 to-red-700"></div>
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black text-gray-800">Permanently Delete</h2>
+                        <p class="text-sm text-gray-500">This action cannot be undone</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-2">You are about to permanently delete:</p>
+                <p class="font-bold text-red-600 mb-4 px-3 py-2 bg-red-50 rounded-lg">"<span id="forceDeleteMenuItemName"></span>"</p>
+                <p class="text-sm text-gray-500 mb-6">This will remove the menu item from the system entirely and cannot be recovered.</p>
+                <div class="flex gap-3">
+                    <button id="forceDeleteMenuItemConfirmBtn"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold hover:from-red-700 hover:to-red-800 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Yes, Delete Permanently
+                    </button>
+                    <button id="forceDeleteMenuItemCancelBtn"
+                            class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -669,6 +711,48 @@ function toggleArchive() {
     btn.classList.toggle('ring-2',      !hidden);
     btn.classList.toggle('ring-gray-400', !hidden);
 }
+
+// ==================== PERMANENT DELETE MODAL (ARCHIVE) ====================
+document.addEventListener('DOMContentLoaded', function() {
+    const modal      = document.getElementById('forceDeleteMenuItemModal');
+    const overlay    = document.getElementById('forceDeleteMenuItemOverlay');
+    const nameSpan   = document.getElementById('forceDeleteMenuItemName');
+    const confirmBtn = document.getElementById('forceDeleteMenuItemConfirmBtn');
+    const cancelBtn  = document.getElementById('forceDeleteMenuItemCancelBtn');
+    let targetId     = null;
+    let isSubmitting = false;
+
+    document.querySelectorAll('.force-delete-menuitem').forEach(btn => {
+        btn.addEventListener('click', function() {
+            targetId = this.dataset.id;
+            nameSpan.textContent = this.dataset.name;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    function closeModal() {
+        if (isSubmitting) return;
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        targetId = null;
+    }
+
+    cancelBtn?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
+    });
+
+    confirmBtn?.addEventListener('click', function() {
+        if (!targetId || isSubmitting) return;
+        isSubmitting = true;
+        this.disabled = true;
+        this.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Deleting...</span>`;
+        if (window.showLoader) window.showLoader();
+        document.getElementById(`force-delete-menuitem-form-${targetId}`)?.submit();
+    });
+});
 
 </script>
 
