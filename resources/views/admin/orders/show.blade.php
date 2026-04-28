@@ -68,7 +68,7 @@
                 @if($order->payment_method === 'cash' && $order->payment_status === 'cash on pickup' && $order->order_status === 'completed')
                     <form action="{{ route('admin.orders.mark-as-paid', $order) }}" method="POST" class="inline" id="paid-form">
                         @csrf
-                        <button type="submit" 
+                        <button type="submit"
                                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
                                 onclick="return confirmPaidOrder()">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

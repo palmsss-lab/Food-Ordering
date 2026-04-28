@@ -226,45 +226,49 @@
                              data-name="{{ $menuItem->name }}">
 
                             {{-- Mobile Card --}}
-                            <div class="sm:hidden px-4 py-3 hover:bg-white/50 transition-colors">
-                                <div class="flex gap-3 items-start">
-                                    {{-- Checkbox + Image --}}
-                                    <div class="flex flex-col items-center gap-2 flex-shrink-0">
-                                        <label class="relative flex items-center cursor-pointer">
-                                            <input type="checkbox"
-                                                   class="cart-item-checkbox w-5 h-5 appearance-none border-2 border-gray-300 rounded-lg checked:bg-[#ea5a47] checked:border-[#ea5a47] transition-all duration-200"
-                                                   data-id="{{ $item->id }}"
-                                                   onchange="syncCheckbox(this); updateSelection()">
-                                            <svg class="absolute w-4 h-4 text-white left-0.5 top-0.5 pointer-events-none hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            <div class="sm:hidden px-4 py-4 hover:bg-white/50 transition-colors">
+                                <div class="flex items-start gap-3">
+
+                                    {{-- Custom checkbox — vertically centered --}}
+                                    <label class="mobile-cb-label flex-shrink-0 mt-1 cursor-pointer">
+                                        <input type="checkbox"
+                                               class="cart-item-checkbox sr-only"
+                                               data-id="{{ $item->id }}"
+                                               onchange="syncCheckbox(this); updateSelection()">
+                                        <span class="mobile-cb-box flex items-center justify-center w-6 h-6 rounded-md border-2 border-gray-300 bg-white transition-all duration-200">
+                                            <svg class="mobile-cb-check w-3.5 h-3.5 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                             </svg>
-                                        </label>
-                                        <div class="relative">
-                                            @if($menuItem->image_path)
-                                                <img src="{{ Storage::url($menuItem->image_path) }}"
-                                                     class="w-16 h-16 object-cover rounded-xl border-2 border-white shadow-md"
-                                                     alt="{{ $menuItem->name }}">
-                                            @else
-                                                <div class="w-16 h-16 bg-gray-200 rounded-xl flex items-center justify-center">
-                                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                </div>
-                                            @endif
-                                            <span class="absolute -top-2 -right-2 px-2 py-0.5 text-white text-xs rounded-full"
-                                                  style="background-color:
-                                                    @if($stockColor == 'green') #10b981
-                                                    @elseif($stockColor == 'yellow') #f59e0b
-                                                    @elseif($stockColor == 'red') #ef4444
-                                                    @else #6b7280
-                                                    @endif">
-                                                {{ $stock > 10 ? 'In stock' : $stock . ' left' }}
-                                            </span>
-                                        </div>
+                                        </span>
+                                    </label>
+
+                                    {{-- Image --}}
+                                    <div class="relative flex-shrink-0">
+                                        @if($menuItem->image_path)
+                                            <img src="{{ Storage::url($menuItem->image_path) }}"
+                                                 class="w-16 h-16 object-cover rounded-xl border-2 border-white shadow-md"
+                                                 alt="{{ $menuItem->name }}">
+                                        @else
+                                            <div class="w-16 h-16 bg-gray-200 rounded-xl flex items-center justify-center">
+                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                        @endif
+                                        <span class="absolute -top-2 -right-2 px-1.5 py-0.5 text-white text-xs rounded-full font-medium"
+                                              style="background-color:
+                                                @if($stockColor == 'green') #10b981
+                                                @elseif($stockColor == 'yellow') #f59e0b
+                                                @elseif($stockColor == 'red') #ef4444
+                                                @else #6b7280
+                                                @endif">
+                                            {{ $stock > 10 ? '✓' : $stock . ' left' }}
+                                        </span>
                                     </div>
+
                                     {{-- Info --}}
                                     <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between items-start gap-2">
+                                        <div class="flex justify-between items-start gap-1">
                                             <h2 class="font-bold text-gray-800 text-sm leading-snug flex-1">{{ $menuItem->name }}</h2>
                                             <button type="button"
                                                     onclick="showSingleDeleteModal({{ $item->id }}, this.closest('.cart-item'))"
@@ -275,7 +279,8 @@
                                                 </svg>
                                             </button>
                                         </div>
-                                        <div class="mt-1 text-sm">
+
+                                        <div class="mt-0.5 text-sm">
                                             <span class="font-semibold {{ $discountedPrice ? 'text-[#ea5a47]' : 'text-gray-700' }}">
                                                 ₱{{ number_format($effectivePrice, 2) }}
                                             </span>
@@ -284,8 +289,9 @@
                                             @endif
                                             <span class="text-xs text-gray-400 ml-1">each</span>
                                         </div>
+
                                         <div class="flex items-center justify-between mt-2">
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex items-center gap-1.5">
                                                 <button type="button"
                                                     onclick="changeQuantity({{ $item->id }}, -1)"
                                                     class="minus-btn w-8 h-8 flex items-center justify-center bg-white rounded-lg border-2 border-gray-200 text-gray-600 hover:bg-[#ea5a47] hover:border-[#ea5a47] hover:text-white transition-all duration-200 font-bold text-base shadow-sm
@@ -307,8 +313,9 @@
                                         </div>
                                     </div>
                                 </div>
+
                                 @if($stock <= 5 && $stock > 0)
-                                    <div class="mt-2 ml-8 text-xs text-{{ $stock <= 2 ? 'red' : 'yellow' }}-600">⚠️ Only {{ $stock }} left in stock!</div>
+                                    <div class="mt-2 pl-9 text-xs text-{{ $stock <= 2 ? 'red' : 'yellow' }}-600">⚠️ Only {{ $stock }} left in stock!</div>
                                 @endif
                             </div>
 
@@ -586,19 +593,24 @@ function showUndoToast(menuItemId) {
     });
 }
 
+function applyCheckboxVisual(cb) {
+    // Desktop: nextElementSibling is an SVG
+    const next = cb.nextElementSibling;
+    if (next && next.tagName === 'svg') {
+        if (cb.checked) { next.classList.add('block'); next.classList.remove('hidden'); }
+        else            { next.classList.remove('block'); next.classList.add('hidden'); }
+    }
+    // Mobile: the <span class="mobile-cb-box"> is a sibling inside .mobile-cb-label
+    // CSS handles it via :checked ~ .mobile-cb-box, so no JS needed there.
+}
+
 function syncCheckbox(source) {
     const id = source.getAttribute('data-id');
     const isChecked = source.checked;
     document.querySelectorAll(`.cart-item-checkbox[data-id="${id}"]`).forEach(cb => {
         if (cb === source) return;
         cb.checked = isChecked;
-        if (isChecked) {
-            cb.nextElementSibling?.classList.add('block');
-            cb.nextElementSibling?.classList.remove('hidden');
-        } else {
-            cb.nextElementSibling?.classList.remove('block');
-            cb.nextElementSibling?.classList.add('hidden');
-        }
+        applyCheckboxVisual(cb);
     });
 }
 
@@ -825,13 +837,7 @@ function toggleSelectAll(source) {
 
     document.querySelectorAll('.cart-item-checkbox').forEach(checkbox => {
         checkbox.checked = isChecked;
-        if (isChecked) {
-            checkbox.nextElementSibling?.classList.add('block');
-            checkbox.nextElementSibling?.classList.remove('hidden');
-        } else {
-            checkbox.nextElementSibling?.classList.remove('block');
-            checkbox.nextElementSibling?.classList.add('hidden');
-        }
+        applyCheckboxVisual(checkbox);
     });
 
     updateSelection();
@@ -1064,13 +1070,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.querySelectorAll('.cart-item-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            if (this.checked) {
-                this.nextElementSibling?.classList.add('block');
-                this.nextElementSibling?.classList.remove('hidden');
-            } else {
-                this.nextElementSibling?.classList.remove('block');
-                this.nextElementSibling?.classList.add('hidden');
-            }
+            applyCheckboxVisual(this);
         });
     });
     
@@ -1092,22 +1092,30 @@ window.showBulkDeleteModal = showBulkDeleteModal;
 </script>
 
 <style>
+    /* ── Desktop checkbox (appearance-none custom) ── */
     .cart-item-checkbox:checked + svg {
         display: block !important;
     }
-    
     .cart-item-checkbox:checked {
         background-color: #ea5a47;
         border-color: #ea5a47;
     }
-    
+
+    /* ── Mobile custom checkbox ── */
+    .mobile-cb-label input:checked ~ .mobile-cb-box {
+        background-color: #ea5a47;
+        border-color: #ea5a47;
+    }
+    .mobile-cb-label input:checked ~ .mobile-cb-box .mobile-cb-check {
+        display: block !important;
+    }
+
     /* Indeterminate state for select all */
     #select-all-checkbox:indeterminate {
         background-color: #ea5a47;
         border-color: #ea5a47;
         position: relative;
     }
-    
     #select-all-checkbox:indeterminate::after {
         content: '';
         position: absolute;

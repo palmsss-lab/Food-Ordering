@@ -1,3 +1,4 @@
+
 <div wire:poll.20s data-active-tab="{{ $this->tab }}">
 
     {{-- Live indicator --}}

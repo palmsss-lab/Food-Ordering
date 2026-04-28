@@ -35,8 +35,8 @@ class CartService
         if (!$this->cart) {
             return collect();
         }
-        
-        return $this->cart->items()->with('menuItem')->get();
+
+        return $this->cart->items()->with('menuItem')->whereHas('menuItem')->get();
     }
 
     // In your CartService.php addItem method

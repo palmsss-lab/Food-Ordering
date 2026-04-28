@@ -337,27 +337,21 @@
             
             <!-- Cancel button - only show if not confirmed -->
            @if(!$order->admin_confirmed_at && $order->payment_method === 'cash')
-                <form action="{{ route('client.orders.cancel', $order) }}" method="POST" class="inline">
-                    @csrf
-                    @method('PUT')
-                    <button type="submit" 
-                            class="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-all w-full"
-                            onclick="return confirm('Are you sure you want to cancel this order?')">
-                        Cancel Order
-                    </button>
-                </form>
+                <button onclick="document.getElementById('cancelOrderModal').classList.remove('hidden')"
+                        class="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-all w-full">
+                    Cancel Order
+                </button>
             @endif
         @endif
         
         @if($order->order_status === 'ready')
-            <form action="{{ route('client.orders.picked-up', $order) }}" method="POST" class="inline">
-                @csrf
-                <button type="submit" 
-                        class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all"
-                        onclick="return confirm('Have you picked up your order?');">
-                    I've Picked Up My Order
-                </button>
-            </form>
+            <button onclick="document.getElementById('pickedUpModal').classList.remove('hidden')"
+                    class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                I've Picked Up My Order
+            </button>
         @endif
         
         <a href="{{ route('client.orders.download', $order->order_number) }}"
@@ -395,6 +389,160 @@
     </div>
     @endif
 </div>
+
+{{-- Picked Up Confirmation Modal --}}
+@if($order->order_status === 'ready')
+<div id="pickedUpModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="document.getElementById('pickedUpModal').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+
+            {{-- Green header band --}}
+            <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white">Confirm Pickup</h2>
+                    <p class="text-white/80 text-sm">Order {{ $order->order_number }}</p>
+                </div>
+            </div>
+
+            <div class="p-6">
+                {{-- Checkmark illustration --}}
+                <div class="flex justify-center mb-5">
+                    <div class="w-20 h-20 rounded-full bg-green-50 border-4 border-green-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <h3 class="text-center text-lg font-bold text-gray-800 mb-1">Your order is ready!</h3>
+                <p class="text-center text-sm text-gray-500 mb-5">
+                    Please confirm that you have already received and picked up your order from the counter.
+                </p>
+
+                {{-- Order summary strip --}}
+                <div class="bg-gray-50 rounded-2xl p-4 mb-5 space-y-1.5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Customer</span>
+                        <span class="font-medium text-gray-800">{{ $order->customer_name }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Items</span>
+                        <span class="font-medium text-gray-800">{{ $order->items->count() }} item(s)</span>
+                    </div>
+                    <div class="flex justify-between text-sm pt-1 border-t border-gray-200">
+                        <span class="text-gray-500 font-semibold">Total</span>
+                        <span class="font-bold text-[#ea5a47]">₱{{ number_format($order->total, 2) }}</span>
+                    </div>
+                </div>
+
+                @if($order->payment_method === 'cash' && $order->payment_status !== 'paid')
+                <div class="mb-5 p-3 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-2">
+                    <svg class="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p class="text-sm text-orange-700">
+                        <span class="font-semibold">Reminder:</span> Please pay <strong>₱{{ number_format($order->total, 2) }}</strong> in cash at the counter.
+                    </p>
+                </div>
+                @endif
+
+                <form action="{{ route('client.orders.picked-up', $order) }}" method="POST">
+                    @csrf
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button type="submit"
+                                class="flex-1 px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Yes, I've Picked It Up
+                        </button>
+                        <button type="button"
+                                onclick="document.getElementById('pickedUpModal').classList.add('hidden')"
+                                class="px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-medium text-gray-600">
+                            Not Yet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Cancel Order Confirmation Modal --}}
+@if($order->order_status === 'pending' && !$order->admin_confirmed_at && $order->payment_method === 'cash')
+<div id="cancelOrderModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="document.getElementById('cancelOrderModal').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+
+            {{-- Red header band --}}
+            <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white">Cancel Order</h2>
+                    <p class="text-white/80 text-sm">Order {{ $order->order_number }}</p>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="flex justify-center mb-5">
+                    <div class="w-20 h-20 rounded-full bg-red-50 border-4 border-red-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <h3 class="text-center text-lg font-bold text-gray-800 mb-1">Cancel this order?</h3>
+                <p class="text-center text-sm text-gray-500 mb-5">
+                    This action cannot be undone. Your order will be permanently cancelled.
+                </p>
+
+                <div class="bg-gray-50 rounded-2xl p-4 mb-5 space-y-1.5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Order</span>
+                        <span class="font-medium text-gray-800">{{ $order->order_number }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm pt-1 border-t border-gray-200">
+                        <span class="text-gray-500 font-semibold">Total</span>
+                        <span class="font-bold text-gray-800">₱{{ number_format($order->total, 2) }}</span>
+                    </div>
+                </div>
+
+                <form action="{{ route('client.orders.cancel', $order) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button type="submit"
+                                class="flex-1 px-5 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Yes, Cancel Order
+                        </button>
+                        <button type="button"
+                                onclick="document.getElementById('cancelOrderModal').classList.add('hidden')"
+                                class="px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-medium text-gray-600">
+                            Keep Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- Hidden print receipt --}}
 <div id="print-receipt">
