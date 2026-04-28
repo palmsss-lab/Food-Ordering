@@ -211,8 +211,9 @@
                         $cartPromoPercent   = $cartPromo ? $cartPromo->discount_percentage : 0;
                     @endphp
                     @foreach($cartItems as $item)
+                        @php $menuItem = $item->menuItem; @endphp
+                        @continue(!$menuItem)
                         @php
-                            $menuItem          = $item->menuItem;
                             $stock             = $menuItem->stock ?? 0;
                             $stockColor        = $stock > 5 ? 'green' : ($stock > 0 ? 'yellow' : 'red');
                             $discountedPrice   = $cartPromo ? round($item->price * (1 - $cartPromoPercent / 100), 2) : null;

@@ -36,7 +36,9 @@ class CartService
             return collect();
         }
 
-        return $this->cart->items()->with('menuItem')->whereHas('menuItem')->get();
+        return $this->cart->items()->with('menuItem')->whereHas('menuItem')->get()
+            ->filter(fn($item) => $item->menuItem !== null)
+            ->values();
     }
 
     // In your CartService.php addItem method
