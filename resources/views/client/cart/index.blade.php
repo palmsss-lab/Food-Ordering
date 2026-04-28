@@ -939,10 +939,11 @@ function changeQuantity(itemId, change) {
     const originalQty = currentQty;
     const originalSubtotal = itemElement.querySelector('.subtotal').textContent;
 
-    itemElement.querySelectorAll('.minus-btn, .plus-btn').forEach(b => b.disabled = true);
-
+    // Update UI immediately — no waiting for server
     quantitySpans.forEach(s => s.textContent = newQty);
     itemElement.querySelectorAll('.subtotal').forEach(s => s.textContent = '₱' + (price * newQty).toFixed(2));
+    updateButtonStates(itemElement, newQty, stock);
+    updateSelection();
 
     fetch(`/client/cart/update/${itemId}`, {
         method: "PUT",
@@ -957,22 +958,20 @@ function changeQuantity(itemId, change) {
     .then(data => {
         if (data.success) {
             updateCartBadge(data.count);
-            updateSelection();
-            showToast('Quantity updated');
-            updateButtonStates(itemElement, newQty, stock);
         } else {
             quantitySpans.forEach(s => s.textContent = originalQty);
             itemElement.querySelectorAll('.subtotal').forEach(s => s.textContent = originalSubtotal);
             showToast(data.message || 'Failed to update', true);
             updateButtonStates(itemElement, originalQty, stock);
+            updateSelection();
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
+    .catch(() => {
         quantitySpans.forEach(s => s.textContent = originalQty);
         itemElement.querySelectorAll('.subtotal').forEach(s => s.textContent = originalSubtotal);
         showToast('Error updating quantity', true);
         updateButtonStates(itemElement, originalQty, stock);
+        updateSelection();
     });
 }
 
